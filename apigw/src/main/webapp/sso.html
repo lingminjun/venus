@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SSO</title>
+</head>
+<body>
+    <a href="">登录</a>
+
+    <script type="text/javascript">
+        //一下登录流程并未完成;
+
+        function GetQueryString(name)
+        {
+            var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+            var r = window.location.search.substr(1).match(reg);
+            if(r!=null)return decodeURIComponent(r[2]); return null;
+        }
+
+        // 该方法将对象转换成URL查询参数
+        var encodeObjectToQueryString = function(param, key) {
+            var paramStr = '';
+            var separator = '&';
+            var mappingOperator = '=';
+            if (param instanceof String || typeof(param) == 'string' || param instanceof Number || typeof(param) == 'number' || param instanceof Boolean || typeof(param) == 'boolean') {
+                paramStr += separator + key + mappingOperator + encodeURIComponent(param);
+            } else {
+                for (var i in param) {
+                    var value = param[i];
+                    var k = key == null ? i : key + (param instanceof Array ? '[' + i + ']' : '.' + i);
+                    paramStr += separator + encodeObjectToQueryString(value, k);
+                }
+            }
+            return paramStr.substr(1);
+        };
+
+        window.onload = function(){
+
+            var _sso_domain = GetQueryString('_sso_tk');
+            //表示已经回到请求域名
+            if (_sso_domain != undefined && _sso_domain != '') {
+                //发起登录请求
+
+                //构建sso.api请求，并签名(静态签名)
+                var domain = document.domain;
+                var url=(domain.substring(0,4) == "http" ? "" : "//")+domain+"/sso.api?_sso_tk="+_sso_domain;
+
+                var aobj = document.querySelector('a');
+                var href = url;
+                aobj.setAttribute('href', href);
+            } else {//给与授权域名，是否登录，若登录，发起授权请求
+
+                // 请修改代码，根据客户端存储位置
+                var csrf_key = localStorage.getItem('csrf_key');
+
+                // 此域名也没有认证权限 > 直接返回
+                if (csrf_key == undefined || csrf_key == '') {
+                    alert("测试下流程，请注释掉此行！")
+                    window.history.back();
+                } else {
+
+                    //请求方信息:to domain
+                    var _sso_aid = GetQueryString('_sso_aid');
+                    var _sso_did = GetQueryString('_sso_did');
+                    var _sso_domain = GetQueryString('_sso_domain');
+
+                    //构建sso.api请求，并签名（csrf_key签名），服务端验证签名后，就可以回调到原来页面
+                    var domain = document.domain;
+
+                    var params = {}
+                    params._sso_aid = _sso_aid
+                    params._sso_did = _sso_did
+                    params._sso_domain = _sso_domain
+                    // params._sig = _signature
+                    var query = encodeObjectToQueryString(params)
+
+                    var url=(domain.substring(0,4) == "http" ? "" : "//")+domain+"/sso.api?" + query;
+
+                    //"_sso_aid="+aid+"&_sso_did="+did+"&_sso_domain="+from+"&_sm=md5
+                    var aobj = document.querySelector('a');
+                    var href = url;
+                    aobj.setAttribute('href', href);
+                }
+            }
+
+        }
+    </script>
+
+</body>
+</html>

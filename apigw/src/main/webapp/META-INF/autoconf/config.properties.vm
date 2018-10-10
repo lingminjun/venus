@@ -1,0 +1,66 @@
+
+#需要被托管的api jar包目录
+com.venus.apigw.jarPath=/home/admin/api
+
+#apigw 文档支持开放
+com.venus.apigw.open.ducoment=${com.venus.apigw.open.ducoment}
+
+#风控文件地址
+com.venus.apigw.risk.black.ips.path=${com.venus.apigw.risk.black.ips.path}
+
+#需要提交图片验证码 与https://checkcode1.venus.com/get.do 对应
+com.venus.apigw.risk.vfcode.check.url=${com.venus.apigw.risk.vfcode.check.url}
+
+#日志输出目录
+com.venus.apigw.log.home=/home/admin/logs/apigw-deploy/
+
+#风控系统配置
+com.venus.apigw.riskServiceRedisKeySet=
+com.venus.apigw.riskServiceRedisConfig=
+
+#oss config
+com.venus.apigw.ossAccessKey=${oss.bucket.accessKey}
+com.venus.apigw.ossAccessSecret=${oss.bucket.accessSecret}
+com.venus.apigw.ossEndPoint=${oss.bucket.endPoint}
+oss.bucket.user.private=${oss.bucket.user.private}
+oss.bucket.order.info=${oss.bucket.order.info}
+oss.bucket.public=${oss.bucket.public}
+
+# dubbo配置
+dubbo.application.name=APIGW_2_0
+dubbo.registry.url=${dubbo.registry.url}
+dubbo.reference.version=${dubbo.reference.version}
+dubbo.reference.timeout=3000
+dubbo.reference.retries=0
+
+# http配置
+http.connect.timeout=3000
+http.read.timeout=3000
+
+#esb单独配置
+com.venus.esb.observer=com.venus.apigw.manager.ESBBraveObserver
+com.venus.esb.loader=com.venus.apigw.manager.ESBHotAPILoader
+com.venus.esb.verify=com.venus.apigw.manager.ESBThirdPartVerify
+com.venus.esb.logger=com.venus.apigw.manager.ESBLogger
+com.venus.esb.apis.dir=/admin/home/apis/
+
+#esb认证相关
+com.venus.esb.rsa.pub.key=${com.venus.esb.rsa.pub.key}
+com.venus.esb.rsa.pri.key=${com.venus.esb.rsa.pri.key}
+com.venus.esb.aes.key=${com.venus.esb.aes.key}
+com.venus.esb.static.sign.key=${com.venus.esb.static.sign.key}
+
+#esb上报日志
+com.venus.esb.zipkin.host=${com.venus.esb.zipkin.host}
+com.venus.esb.open.brave=${com.venus.esb.open.brave}
+
+#gw database
+com.venus.gw.datasource.url=${com.venus.gw.datasource.url}
+com.venus.gw.datasource.username=${com.venus.gw.datasource.username}
+com.venus.gw.datasource.password=${com.venus.gw.datasource.password}
+com.venus.gw.datasource.driverClassName=${com.venus.gw.datasource.driverClassName}
+
+
+
+# =========== 动态配置部分 ===========
+com.venus.apigw.risk.open=false

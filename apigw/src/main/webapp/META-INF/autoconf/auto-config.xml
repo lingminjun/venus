@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<config description="venus.apigw.config">
+    <group name="dubbo">
+        <property name="dubbo.registry.url" description="dubbo注册地址" required="true"/>
+        <property name="dubbo.reference.version" description="dubbo服务版本号" required="true"/>
+    </group>
+    <group name="risk">
+        <property name="com.venus.apigw.risk.black.ips.path" description="ip黑名单地址" required="false"/>
+        <property name="com.venus.apigw.risk.vfcode.check.url" description="图片验证码" required="false"/>
+    </group>
+    <group name="brave">
+        <property name="com.venus.esb.zipkin.host" description="上报日志服务" required="true"/>
+        <property name="com.venus.esb.open.brave" description="是否开放上报日志" required="true"/>
+    </group>
+    <group name="secret">
+        <property name="com.venus.esb.rsa.pub.key" description="用于非对称加密消息的rsa公私钥对" required="true"/>
+        <property name="com.venus.esb.rsa.pri.key" description="用于非对称加密消息的rsa公私钥对" required="true"/>
+        <property name="com.venus.esb.aes.key" description="用于对称加密消息的aes私钥" required="true"/>
+        <property name="com.venus.esb.static.sign.key" description="静态签名秘钥" required="true"/>
+    </group>
+    <group name="db">
+        <property name="com.venus.gw.datasource.url" description="数据库链接地址" required="true"/>
+        <property name="com.venus.gw.datasource.username" description="用户名" required="true"/>
+        <property name="com.venus.gw.datasource.password" description="密码" required="true"/>
+        <property name="com.venus.gw.datasource.driverClassName" description="驱动" required="true"/>
+    </group>
+    <group name="oss">
+        <property name="oss.bucket.user.private" description="用户相关oss bucket" required="true"/>
+        <property name="oss.bucket.order.info" description="订单相关oss bucket" required="true"/>
+        <property name="oss.bucket.public" description="公共oss bucket" required="true"/>
+        <property name="oss.bucket.accessKey" description="oss access key" required="true"/>
+        <property name="oss.bucket.accessSecret" description="oss access secret" required="true"/>
+        <property name="oss.bucket.endPoint" description="oss access end point" required="true"/>
+    </group>
+    <script>
+        <generate template="config.properties.vm" destfile="WEB-INF/classes/config.properties" charset="UTF-8"/>
+    </script>
+</config>
