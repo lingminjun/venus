@@ -60,7 +60,8 @@ com.venus.gw.datasource.username=${com.venus.gw.datasource.username}
 com.venus.gw.datasource.password=${com.venus.gw.datasource.password}
 com.venus.gw.datasource.driverClassName=${com.venus.gw.datasource.driverClassName}
 
-
+# close servlet filter
+com.venus.esb.exclude.servlet.filter=true
 
 # =========== 动态配置部分 ===========
 com.venus.apigw.risk.open=false
