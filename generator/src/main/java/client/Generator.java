@@ -149,7 +149,7 @@ public abstract class Generator {
             builder.append(getFileHeaderDetail(callName,fileExt));
 
             // 子类完成代码
-            genAPICall(builder,methodInfo);
+            genAPICall(builder,callName,methodInfo);
 
             String filePath = this.outDir.endsWith(File.separator) ? this.outDir + callName + fileExt : this.outDir + File.separator + callName + fileExt;
 
@@ -195,7 +195,7 @@ public abstract class Generator {
         builder.append(getFileHeaderDetail(entityName,fileExt));
 
         // 子类完成代码
-        genAPIEntity(builder,struct);
+        genAPIEntity(builder,entityName,struct);
 
         FileUtils.writeFile(filePath,builder.toString(),ESBConsts.UTF8);
 
@@ -223,7 +223,7 @@ public abstract class Generator {
         String filePath = this.outDir.endsWith(File.separator) ? this.outDir + fileName + fileExt : this.outDir + File.separator + fileName + fileExt;
         StringBuilder builder = new StringBuilder();
         builder.append(getFileHeaderDetail(fileName,fileExt));
-        genAPICodes(builder,codeList);
+        genAPICodes(builder,fileName,codeList);
         FileUtils.writeFile(filePath,builder.toString(),ESBConsts.UTF8);
     }
 
@@ -258,7 +258,16 @@ public abstract class Generator {
 //    public abstract void genAPICall(StringBuilder builder, MethodInfo methodInfo);
 
     // 子类重载并实现
-    public abstract void genAPICall(StringBuilder builder, MethodInfo methodInfo);
-    public abstract void genAPIEntity(StringBuilder builder, TypeStruct typeStruct);
-    public abstract void genAPICodes(StringBuilder builder, List<CodeInfo> codeList);
+    public abstract void genAPICall(StringBuilder builder, String className, MethodInfo methodInfo);
+    public abstract void genAPIEntity(StringBuilder builder, String className, TypeStruct typeStruct);
+
+    /***** 格式 *****
+    class VENUS_APIGW_CODES_FILE_NAME {
+        class Domain(Service) {
+            // desc
+            public final static int name = code
+        }
+    }
+     */
+    public abstract void genAPICodes(StringBuilder builder, String className, List<CodeInfo> codeList);
 }

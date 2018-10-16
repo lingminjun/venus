@@ -41,15 +41,15 @@ public class SwiftGenerator extends Generator {
         return ".swift";
     }
 
-    public void genAPICall(StringBuilder builder, MethodInfo methodInfo) {
+    public void genAPICall(StringBuilder builder, String className, MethodInfo methodInfo) {
         //TODO :
     }
 
-    public void genAPIEntity(StringBuilder builder, TypeStruct typeStruct) {
+    public void genAPIEntity(StringBuilder builder, String className, TypeStruct typeStruct) {
         //TODO :
     }
 
-    public void genAPICodes(StringBuilder builder, List<CodeInfo> codeList) {
+    public void genAPICodes(StringBuilder builder, String className, List<CodeInfo> codeList) {
         //TODO :
     }
 }
