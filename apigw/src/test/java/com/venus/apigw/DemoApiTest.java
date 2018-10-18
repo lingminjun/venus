@@ -222,4 +222,46 @@ public class DemoApiTest {
         System.out.println("【"+json+"】");
 
     }
+
+
+    @Test
+    public void testWebLoginAddDemo() throws Exception {
+        //登录获取
+        String token;
+        String stoken;
+        String rtoken;
+        String csrf_key; //秘钥
+
+        {
+            Map<String,String> params = new HashMap<>();
+            params.put(ESBSTDKeys.SELECTOR_KEY,"demo.webLogin");
+            params.put("name","MJ");
+            params.put("pswd","123456");
+            params.put(ESBSTDKeys.AID_KEY,"" + APP_ID.mymm_pc.aid);
+            addMD5Sign(null,params);
+
+            String json = HTTP.get("http://localhost:8080/m.api", params);
+            System.out.println("【"+json+"】");
+            Resp<ESBToken> resp = JSON.parseObject(json, TokenResp.class);
+            csrf_key = resp.content[0].key;
+            token = resp.content[0].token;
+            stoken = resp.content[0].stoken;
+            rtoken = resp.content[0].refresh;
+        }
+
+        Map<String,String> params = new HashMap<>();
+        params.put(ESBSTDKeys.SELECTOR_KEY,"demo.addDemo");
+
+        Map<String,String> obj = new HashMap<>();
+        obj.put("username","随便测试");
+        obj.put("createAt","" + System.currentTimeMillis());
+        params.put("demo",JSON.toJSONString(obj,ESBConsts.FASTJSON_SERIALIZER_FEATURES));
+
+        params.put(ESBSTDKeys.TOKEN_KEY,token);
+        addMD5Sign(csrf_key,params);
+
+        String json = HTTP.get("http://localhost:8080/m.api", params);
+        System.out.println("【"+json+"】");
+
+    }
 }
