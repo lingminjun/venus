@@ -249,19 +249,50 @@ public class DemoApiTest {
             rtoken = resp.content[0].refresh;
         }
 
-        Map<String,String> params = new HashMap<>();
-        params.put(ESBSTDKeys.SELECTOR_KEY,"demo.addDemo");
+        // 单个增加
+        {
+            Map<String, String> params = new HashMap<>();
+            params.put(ESBSTDKeys.SELECTOR_KEY, "demo.addDemo");
 
-        Map<String,String> obj = new HashMap<>();
-        obj.put("username","随便测试");
-        obj.put("createAt","" + System.currentTimeMillis());
-        params.put("demo",JSON.toJSONString(obj,ESBConsts.FASTJSON_SERIALIZER_FEATURES));
+            Map<String, String> obj = new HashMap<>();
+            obj.put("username", "随便测试");
+            obj.put("createAt", "" + System.currentTimeMillis());
+            params.put("demo", JSON.toJSONString(obj, ESBConsts.FASTJSON_SERIALIZER_FEATURES));
 
-        params.put(ESBSTDKeys.TOKEN_KEY,token);
-        addMD5Sign(csrf_key,params);
+            params.put(ESBSTDKeys.TOKEN_KEY, token);
+            addMD5Sign(csrf_key, params);
 
-        String json = HTTP.get("http://localhost:8080/m.api", params);
-        System.out.println("【"+json+"】");
+            String json = HTTP.get("http://localhost:8080/m.api", params);
+            System.out.println("【" + json + "】");
+        }
+
+        // 批量增加
+        {
+            Map<String, String> params = new HashMap<>();
+            params.put(ESBSTDKeys.SELECTOR_KEY, "demo.batchAddDemo");
+
+            List<Map<String, String>> lst = new ArrayList<>();
+            {
+                Map<String, String> obj = new HashMap<>();
+                obj.put("username", "aaa");
+                obj.put("createAt", "" + System.currentTimeMillis());
+                lst.add(obj);
+            }
+            {
+                Map<String, String> obj = new HashMap<>();
+                obj.put("username", "bbb");
+                obj.put("createAt", "" + System.currentTimeMillis());
+                lst.add(obj);
+            }
+            params.put("models", JSON.toJSONString(lst, ESBConsts.FASTJSON_SERIALIZER_FEATURES));
+            params.put("ignoreError", "false");
+
+            params.put(ESBSTDKeys.TOKEN_KEY, token);
+            addMD5Sign(csrf_key, params);
+
+            String json = HTTP.get("http://localhost:8080/m.api", params);
+            System.out.println("【" + json + "】");
+        }
 
     }
 }
