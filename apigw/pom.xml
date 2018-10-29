@@ -121,37 +121,40 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>${maven.war.version}</version>
-                <!--<configuration>-->
+
+                <configuration>
+                    <attachClasses>true</attachClasses>
+                    <classesClassifier>api</classesClassifier>
                 <!--<webResources>-->
                 <!--<resource>-->
                 <!--<directory>src/main/java</directory>-->
                 <!--<targetPath>WEB-INF/classes</targetPath>-->
                 <!--</resource>-->
                 <!--</webResources>-->
-                <!--</configuration>-->
+                </configuration>
             </plugin>
-            <!--<plugin>-->
-            <!--<groupId>com.alibaba.citrus.tool</groupId>-->
-            <!--<artifactId>autoconfig-maven-plugin</artifactId>-->
-            <!--<version>${autoconfig-maven-plugin.version}</version>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<phase>prepare-package</phase>-->
-            <!--<goals>-->
-            <!--<goal>autoconfig</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--<configuration>-->
-            <!--<dest>target/classes</dest>-->
-            <!--&lt;!&ndash; <interactive>true</interactive> &ndash;&gt;-->
-            <!--<descriptors>-->
-            <!--<includes>-->
-            <!--<include>META-INF/**/auto-config.xml</include>-->
-            <!--</includes>-->
-            <!--</descriptors>-->
-            <!--</configuration>-->
-            <!--</plugin>-->
+            <plugin>
+                <groupId>com.alibaba.citrus.tool</groupId>
+                <artifactId>autoconfig-maven-plugin</artifactId>
+                <version>${autoconfig-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>autoconfig</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <dest>target/classes</dest>
+                    <!-- <interactive>true</interactive> -->
+                    <descriptors>
+                        <includes>
+                            <include>META-INF/**/auto-config.xml</include>
+                        </includes>
+                    </descriptors>
+                </configuration>
+            </plugin>
         </plugins>
         <finalName>apigw</finalName>
     </build>
