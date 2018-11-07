@@ -38,7 +38,7 @@
 
         <tomcat.jdbc.version>7.0.50</tomcat.jdbc.version>
         <!-- mysql驱动 -->
-        <mysql.connector.version>5.1.25</mysql.connector.version>
+        <mysql.connector.version>5.1.29</mysql.connector.version>
 
         <asm.all.version>4.2</asm.all.version>
         <httpcomponents.version>4.4</httpcomponents.version>
