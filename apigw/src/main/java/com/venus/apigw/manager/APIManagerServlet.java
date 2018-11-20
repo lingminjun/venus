@@ -71,8 +71,8 @@ public class APIManagerServlet extends BaseServlet {
             } catch (ESBException e) {
                 e.printStackTrace();
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
-                return;
             }
+            return;
         }
 
         //更新接口 (TODO: 支持批量)
@@ -84,8 +84,8 @@ public class APIManagerServlet extends BaseServlet {
                 e.printStackTrace();
                 logger.error("参数设置错误，必填APISelector参数", e);
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
-                return;
             }
+            return;
         }
 
         String apiInfo = params.get("API");
