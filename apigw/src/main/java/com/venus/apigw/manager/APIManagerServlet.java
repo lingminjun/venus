@@ -1,8 +1,12 @@
 package com.venus.apigw.manager;
 
+import com.alibaba.fastjson.JSON;
 import com.venus.apigw.common.BaseServlet;
+import com.venus.apigw.db.APIPojo;
+import com.venus.apigw.db.DB;
 import com.venus.esb.ESB;
 import com.venus.esb.ESBAPIContext;
+import com.venus.esb.ESBAPIInfo;
 import com.venus.esb.ESBResponse;
 import com.venus.esb.config.ESBConfigCenter;
 import com.venus.esb.lang.*;
@@ -67,10 +71,11 @@ public class APIManagerServlet extends BaseServlet {
             } catch (ESBException e) {
                 e.printStackTrace();
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
+                return;
             }
         }
 
-        //更新接口
+        //更新接口 (TODO: 支持批量)
         String selector = params.get("APISelector");
         if (selector == null || selector.length() == 0) {
             try {
@@ -79,6 +84,7 @@ public class APIManagerServlet extends BaseServlet {
                 e.printStackTrace();
                 logger.error("参数设置错误，必填APISelector参数", e);
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
+                return;
             }
         }
 
@@ -87,9 +93,30 @@ public class APIManagerServlet extends BaseServlet {
         //暂时不支持更新
         if (apiInfo != null && apiInfo.length() > 0) {
             // 插入数据库。暂时不实现
+            List<ESBAPIInfo> list = JSON.parseArray(apiInfo,ESBAPIInfo.class);
+            for (ESBAPIInfo api : list) {
+                APIPojo pojo = new APIPojo();
+                pojo.modified = System.currentTimeMillis();
+                pojo.domain = api.api.domain;
+                pojo.module = api.api.module;
+                pojo.method = api.api.methodName;
+                pojo.detail = api.api.desc;
+                pojo.owner = api.api.owner;
+                pojo.security = api.api.security;
+                pojo.status = 0;
+                pojo.json = JSON.toJSONString(api,ESBConsts.FASTJSON_SERIALIZER_FEATURES);
+                DB.upinsert("apigw_api",new String[]{"domain","module","method","json","detail","owner","security","status","modified"},pojo);
+            }
         }
 
-        ESB.bus().refresh(selector);
+        String[] ss = selector.split(",");
+        if (ss != null) {
+            for (String sel : ss) {
+                ESB.bus().refresh(sel);
+            }
+        } else {
+            ESB.bus().refresh(selector);
+        }
 
         List<ESBResponse> results = new ArrayList<>();
         ESBResponse success = new ESBResponse();
@@ -102,6 +129,7 @@ public class APIManagerServlet extends BaseServlet {
             e.printStackTrace();
             logger.error("未知错误：", e);
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
+            return;
         }
     }
 
