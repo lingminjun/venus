@@ -32,7 +32,7 @@ import java.util.Map;
  * Date: 2018-10-07
  * Time: 上午9:21
  */
-@WebServlet("/gw.api")
+@WebServlet("/gw.do") //方便线上路径禁用，/gw.*不支持访问(gw.do、gw.html)
 public class APIManagerServlet extends BaseServlet {
 
     private static final Logger logger                   = LoggerFactory.getLogger(APIManagerServlet.class);
