@@ -1,0 +1,44 @@
+// Auto Generated.  DO NOT EDIT!
+
+import {Network} from "../network/Network"
+import SecurityType from "../network/SecurityType"
+/**
+  * @class {{className}}
+  * @param  {Object} params
+  * @return {Network}
+  */
+class {{className}} extends Network {
+  constructor(params) {
+    super(params);
+    this.api = {
+      METHOD_NAME: '{{methodName}}',
+      SECURITY_TYPE: {{securityType}},
+      /**
+      *小程序节约控件屏蔽掉无用字段
+      *REQUIRED: {
+        {{#parameterInfoList}}
+        {{#isRequired}}
+      *  "{{name}}": "{{type}}"{{^last}},{{/last}}
+        {{/isRequired}}
+        {{/parameterInfoList}}
+      *},
+      *OPTIONAL: {
+        {{#parameterInfoList}}
+        {{^isRequired}}
+      *  "{{name}}": "{{type}}"{{^last}},{{/last}}
+        {{/isRequired}}
+        {{/parameterInfoList}}
+      *},
+      *VERIFY:{
+      *},
+      *ERROR_CODE: {
+        {{#errorCodeList}}
+      *  "{{code}}": "{{desc}}"{{^last}},{{/last}}
+        {{/errorCodeList}}
+      *}
+      */
+    }
+  }
+}
+
+export { {{className}}  };

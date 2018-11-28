@@ -2,7 +2,7 @@ package com.venus.apigw.manager;
 
 import com.alibaba.dubbo.common.utils.LRUCache;
 import com.venus.apigw.db.APIThirdSecurityPojo;
-import com.venus.apigw.db.DB;
+import com.venus.apigw.db.DBUtil;
 import com.venus.esb.ESBAPISecurity;
 import com.venus.esb.ESBAPIVerify;
 import com.venus.esb.lang.ESBT;
@@ -28,14 +28,14 @@ public class ESBThirdPartVerify extends ESBAPIVerify {
             return security;
         }
 
-        List<APIThirdSecurityPojo> results = DB.query("apigw_third_party_secret","`id` = ?", new Object[]{ESBT.longInteger(tid)}, APIThirdSecurityPojo.class);
-        if (results != null && results.size() > 0) {
-            APIThirdSecurityPojo pojo = results.get(0);
-            security = pojo.getAPISecurity();
 
-            if (security != null) {
-                cache.put(tid,security);
-            }
+        APIThirdSecurityPojo pojo = DBUtil.getThirdPartySecurityInfo(ESBT.longInteger(tid));
+        if (pojo != null) {
+            security = pojo.getAPISecurity();
+        }
+
+        if (security != null) {
+            cache.put(tid,security);
         }
 
         //最好是做缓存

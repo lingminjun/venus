@@ -74,10 +74,8 @@ public class DemoApiTest {
     //加签参数
     public void addMD5Sign(String key,Map<String,String> params) throws UnsupportedEncodingException {
         params.put(ESBSTDKeys.SIGNATURE_METHOD_KEY,sm);
-
         StringBuilder builder = ESBAPISignature.getSortedParameters(params);
         Signable signature = ESBAPISignature.getSignable(sm, (key == null || key.length() == 0) ? static_key : key ,null);
-
         String sign = signature.sign(builder.toString().getBytes(ESBConsts.UTF8));
         params.put(ESBSTDKeys.SIGN_KEY,sign);
     }
@@ -89,6 +87,15 @@ public class DemoApiTest {
         }
         return ESBAPISignature.getSortedParameters(map);
     }
+
+//    @Test
+//    public void testSplit() {
+//        String selector = "sdsaj,,dsjks,dsada";
+//        String[] ss = selector.split(",");
+//        for (String s : ss) {
+//            System.out.println(s);
+//        }
+//    }
 
 
     @Test
@@ -117,6 +124,43 @@ public class DemoApiTest {
         System.out.println("【"+json+"】");
         Resp<ESBToken> resp = JSON.parseObject(json, TokenResp.class);
 
+    }
+
+    @Test
+    public void testRefreshToken() throws Exception {
+
+        //登录获取
+        String token;
+        String stoken;
+        String rtoken;
+        String csrf_key; //秘钥
+
+        {
+            Map<String,String> params = new HashMap<>();
+            params.put(ESBSTDKeys.SELECTOR_KEY,"demo.webLogin");
+            params.put("name","MJ");
+            params.put("pswd","123456");
+            params.put(ESBSTDKeys.AID_KEY,"" + APP_ID.mymm_pc.aid);
+            addMD5Sign(null,params);
+
+            String json = HTTP.get("http://localhost:8080/m.api", params);
+            System.out.println("【"+json+"】");
+            Resp<ESBToken> resp = JSON.parseObject(json, TokenResp.class);
+            csrf_key = resp.content[0].key;
+            token = resp.content[0].token;
+            stoken = resp.content[0].stoken;
+            rtoken = resp.content[0].refresh;
+        }
+
+        Map<String,String> params = new HashMap<>();
+        params.put(ESBSTDKeys.SELECTOR_KEY,ESBConsts.REFRESH_TOKEN_SPECIFIC_SELECTOR);
+        params.put(ESBSTDKeys.SECRET_TOKEN_KEY,stoken);
+        params.put(ESBSTDKeys.REFRESH_TOKEN_KEY,rtoken);
+        params.put(ESBSTDKeys.TOKEN_KEY,token);
+        addMD5Sign(csrf_key,params);
+
+        String json = HTTP.get("http://localhost:8080/m.api", params);
+        System.out.println("【"+json+"】");
     }
 
 
@@ -286,6 +330,68 @@ public class DemoApiTest {
             }
             params.put("models", JSON.toJSONString(lst, ESBConsts.FASTJSON_SERIALIZER_FEATURES));
             params.put("ignoreError", "false");
+
+            params.put(ESBSTDKeys.TOKEN_KEY, token);
+            addMD5Sign(csrf_key, params);
+
+            String json = HTTP.get("http://localhost:8080/m.api", params);
+            System.out.println("【" + json + "】");
+        }
+
+    }
+
+
+    @Test
+    public void testABDemo() throws Exception {
+        //登录获取
+        String token;
+        String stoken;
+        String rtoken;
+        String csrf_key; //秘钥
+
+        {
+            Map<String,String> params = new HashMap<>();
+            params.put(ESBSTDKeys.SELECTOR_KEY,"demo.webLogin");
+            params.put("name","MJ");
+            params.put("pswd","123456");
+            params.put(ESBSTDKeys.AID_KEY,"" + APP_ID.mymm_pc.aid);
+            addMD5Sign(null,params);
+
+            String json = HTTP.get("http://localhost:8080/m.api", params);
+            System.out.println("【"+json+"】");
+            Resp<ESBToken> resp = JSON.parseObject(json, TokenResp.class);
+            csrf_key = resp.content[0].key;
+            token = resp.content[0].token;
+            stoken = resp.content[0].stoken;
+            rtoken = resp.content[0].refresh;
+        }
+
+        // 单个增加
+        {
+            Map<String, String> params = new HashMap<>();
+            params.put(ESBSTDKeys.SELECTOR_KEY, "msg.addTestTableB");
+
+            Map<String, String> obj = new HashMap<>();
+            obj.put("name", "xianyong");
+            params.put("testTableB", JSON.toJSONString(obj, ESBConsts.FASTJSON_SERIALIZER_FEATURES));
+
+            params.put(ESBSTDKeys.TOKEN_KEY, token);
+            addMD5Sign(csrf_key, params);
+
+            String json = HTTP.get("http://localhost:8080/m.api", params);
+            System.out.println("【" + json + "】");
+        }
+
+        // 批量增加
+        {
+            Map<String, String> params = new HashMap<>();
+            params.put(ESBSTDKeys.SELECTOR_KEY, "platform.addTestTableA");
+
+            {
+                Map<String, String> obj = new HashMap<>();
+                obj.put("user", "ooooo");
+                params.put("testTableA", JSON.toJSONString(obj, ESBConsts.FASTJSON_SERIALIZER_FEATURES));
+            }
 
             params.put(ESBSTDKeys.TOKEN_KEY, token);
             addMD5Sign(csrf_key, params);

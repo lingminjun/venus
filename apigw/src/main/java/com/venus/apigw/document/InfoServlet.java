@@ -4,12 +4,14 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.venus.apigw.consts.ConstField;
 import com.venus.apigw.db.APIPojo;
-import com.venus.apigw.db.DB;
+import com.venus.apigw.db.DBUtil;
 import com.venus.apigw.document.entities.ApiMethodInfo;
 import com.venus.apigw.document.entities.Document;
 import com.venus.apigw.manager.APIManager_New;
 import com.venus.apigw.serializable.POJOSerializerProvider;
 import com.venus.apigw.serializable.Serializer;
+import com.venus.esb.ESBAPIInfo;
+import com.venus.esb.annotation.ESBAPI;
 import com.venus.esb.lang.ESBConsts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,14 +61,14 @@ public class InfoServlet extends HttpServlet {
         }
     }
 
-    public static Document convertApiMethodInfos(List<APIPojo> apiPojos) {
+    public static Document convertApiMethodInfos(List<ESBAPIInfo> infos) {
 
         List<ApiMethodInfo> apis = new ArrayList<>();
-        for (APIPojo pojo : apiPojos) {
-            apis.add(APIManager_New.convertToMethodInfo(pojo.getInfo()));
+        for (ESBAPIInfo pojo : infos) {
+            apis.add(APIManager_New.convertToMethodInfo(pojo));
         }
 
-            return new ApiDocumentationHelper().getDocument(apis.toArray(new ApiMethodInfo[0]));
+        return new ApiDocumentationHelper().getDocument(apis.toArray(new ApiMethodInfo[0]));
 //            logger.info("api method list size {}",(document.apiList != null ? document.apiList.size() : 0));
 
     }
@@ -88,7 +90,7 @@ public class InfoServlet extends HttpServlet {
         try {
 
             //修改成数据库查询接口
-            List<APIPojo> results = DB.query("apigw_api","`status` = ?", new Object[]{0}, APIPojo.class);
+            List<ESBAPIInfo> results = DBUtil.allAPIsForStatus(0);
             Document document = convertApiMethodInfos(results);
 
             logger.info("api method count {}",(document.apiList != null ? document.apiList.size() : 0));

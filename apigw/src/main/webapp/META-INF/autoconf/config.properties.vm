@@ -19,6 +19,9 @@ com.venus.apigw.riskServiceRedisKeySet=
 com.venus.apigw.riskServiceRedisConfig=
 
 #oss config
+oss.bucket.accessKey=xxxx
+oss.bucket.accessSecret=xxxx
+oss.bucket.endPoint=http://oss-cn-shanghai-internal.aliyuncs.com
 com.venus.apigw.ossAccessKey=${oss.bucket.accessKey}
 com.venus.apigw.ossAccessSecret=${oss.bucket.accessSecret}
 com.venus.apigw.ossEndPoint=${oss.bucket.endPoint}

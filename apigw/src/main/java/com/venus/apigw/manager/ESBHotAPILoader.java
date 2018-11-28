@@ -1,7 +1,7 @@
 package com.venus.apigw.manager;
 
 import com.venus.apigw.db.APIPojo;
-import com.venus.apigw.db.DB;
+import com.venus.apigw.db.DBUtil;
 import com.venus.esb.ESB;
 import com.venus.esb.ESBAPIInfo;
 import com.venus.esb.ESBAPILoader;
@@ -64,13 +64,8 @@ public class ESBHotAPILoader extends ESBAPILoader {
         if (strs.length != 3) {
             return null;
         }
-        List<APIPojo> results = DB.query("apigw_api","`domain` = ? and `module` = ? and `method` = ?", new Object[]{strs[0],strs[1],strs[2]}, APIPojo.class);
-        if (results != null && results.size() > 0) {
-            APIPojo pojo = results.get(0);
-            return pojo.getInfo();
-        }
 
-        return null;
+        return DBUtil.getAPI(strs[0],strs[1],strs[2]);
     }
 
 }

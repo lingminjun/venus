@@ -19,6 +19,12 @@
             <groupId>com.venus.esb</groupId>
             <artifactId>caller</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.venus.apigw</groupId>
+            <artifactId>gwutil</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>

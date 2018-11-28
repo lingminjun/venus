@@ -1,6 +1,5 @@
 package com.venus.apigw.db;
 
-import com.venus.apigw.config.GWConfig;
 import com.venus.esb.lang.ESBT;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -11,7 +10,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,19 +26,26 @@ public final class DB {
 
     private DataSource datasource;
 
-    private DB() {
+    public DB(String url, String user, String pswd) {
+        this(url,user,pswd,"com.mysql.jdbc.Driver");
+    }
+
+    public DB(String url, String user, String pswd, String dirver) {
 
         PoolProperties p = new PoolProperties();
 
-        p.setUrl(GWConfig.getInstance().getDatasourceUrl());
-        p.setDriverClassName(GWConfig.getInstance().getDatasourceDriverClass());
+        p.setUrl(url);
+        if (dirver == null) {
+            dirver = "com.mysql.jdbc.Driver";
+        }
+        p.setDriverClassName(dirver);
         try {
-            Class.forName(GWConfig.getInstance().getDatasourceDriverClass());
+            Class.forName(dirver);//提前加载下驱动
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        p.setUsername(GWConfig.getInstance().getDatasourceUsername());
-        p.setPassword(GWConfig.getInstance().getDatasourcePassword());
+        p.setUsername(user);
+        p.setPassword(pswd);
 
         p.setJmxEnabled(false);
         p.setTestWhileIdle(true);
@@ -62,24 +69,24 @@ public final class DB {
 
     }
 
-    public static DB pool() {
-        return DBPoolSingletonHolder.INSTANCE;
-    }
+//    public static DB pool() {
+//        return DBPoolSingletonHolder.INSTANCE;
+//    }
+//
+//    private static class DBPoolSingletonHolder {
+//        private static DB INSTANCE = new DB();
+//    }
 
-    private static class DBPoolSingletonHolder {
-        private static DB INSTANCE = new DB();
-    }
-
-    public static final Connection getConnection() {
+    public final Connection getConnection() {
         try {
-            return pool().datasource.getConnection();
+            return this.datasource.getConnection();
         } catch (SQLException e) {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public static final void close(Connection conn, ResultSet rs, Statement st) {
+    public final void close(Connection conn, ResultSet rs, Statement st) {
         SQLException dbException = null;
         try {
             if (rs != null) {
@@ -137,14 +144,14 @@ public final class DB {
         } else if (bind.getClass() == Double.class || bind.getClass() == double.class) {
             statement.setDouble(index, (Double) bind);
         } else if (bind instanceof java.util.Date) {
-            java.sql.Timestamp dt = new java.sql.Timestamp(((java.util.Date)bind).getTime());
+            Timestamp dt = new Timestamp(((java.util.Date)bind).getTime());
             statement.setTimestamp(index, dt);
         } else if (bind instanceof java.sql.Date) {
             statement.setDate(index, (java.sql.Date)bind);
-        } else if (bind instanceof java.sql.Time) {
-            statement.setTime(index, (java.sql.Time)bind);
-        } else if (bind instanceof java.sql.Timestamp) {
-            statement.setTimestamp(index, (java.sql.Timestamp)bind);
+        } else if (bind instanceof Time) {
+            statement.setTime(index, (Time)bind);
+        } else if (bind instanceof Timestamp) {
+            statement.setTimestamp(index, (Timestamp)bind);
         } else {
             throw new RuntimeException("不支持的类型绑定");
         }
@@ -230,13 +237,13 @@ public final class DB {
                 if (value != null) {
                     field.set(obj, value);
                 }
-            } else if (field.getType() == java.sql.Time.class) {
-                java.sql.Time value = result.getTime(field.getName());
+            } else if (field.getType() == Time.class) {
+                Time value = result.getTime(field.getName());
                 if (value != null) {
                     field.set(obj, value);
                 }
-            } else if (field.getType() == java.sql.Timestamp.class) {
-                java.sql.Timestamp value = result.getTimestamp(field.getName());
+            } else if (field.getType() == Timestamp.class) {
+                Timestamp value = result.getTimestamp(field.getName());
                 if (value != null) {
                     field.set(obj, value);
                 }
@@ -283,7 +290,7 @@ public final class DB {
             }
 
             if (field.getType() == java.util.Date.class) {
-                value = new java.sql.Timestamp(((java.util.Date) value).getTime());
+                value = new Timestamp(((java.util.Date) value).getTime());
                 values.add(value);
             }
 
@@ -293,11 +300,12 @@ public final class DB {
                     || field.getType() == Byte.class || field.getType() == byte.class
                     || field.getType() == Short.class || field.getType() == short.class
                     || field.getType() == Integer.class || field.getType() == int.class
+                    || field.getType() == Long.class || field.getType() == long.class
                     || field.getType() == Float.class || field.getType() == float.class
                     || field.getType() == Double.class || field.getType() == double.class
                     || field.getType() == java.sql.Date.class
-                    || field.getType() == java.sql.Time.class
-                    || field.getType() == java.sql.Timestamp.class
+                    || field.getType() == Time.class
+                    || field.getType() == Timestamp.class
 
                     || field.getType() == java.util.Date.class // convert
                     ) {
@@ -335,7 +343,7 @@ public final class DB {
         return vs;
     }
 
-    public static int upinsert(String table, String[] keys, Object object) {
+    public int upinsert(String table, String[] keys, Object object) {
         if (keys == null || keys.length == 0) {
             return 0;
         }
@@ -389,7 +397,11 @@ public final class DB {
         return row;
     }
 
-    public static <T extends Object> List<T> query(String table, String condition, Object[] binds, Class<T> type) {
+    public <T extends Object> List<T> query(String table, String condition, Object[] binds, Class<T> type) {
+        return query(null,table,condition,binds,type);
+    }
+
+    public <T extends Object> List<T> query(String scheme, String table, String condition, Object[] binds, Class<T> type) {
 
         // 数据库连接
         Connection connection = null;
@@ -410,7 +422,7 @@ public final class DB {
             connection = getConnection();
 
             // 定义sql语句 ?表示占位符
-            String sql = "select * from `" + table + "`";//where `domain` = ? and `module` = ? and `method` = ?";
+            String sql = "select * from `" + (scheme != null ? scheme + "`.`" : "") + table + "`";//where `domain` = ? and `module` = ? and `method` = ?";
             if (condition != null && condition.length() > 0) {
                 sql = sql + " where " + condition;//"`domain` = ? and `module` = ? and `method` = ?";
             }
@@ -442,5 +454,88 @@ public final class DB {
         }
 
         return list;
+    }
+
+    public int delete(String table, String condition, Object[] binds) {
+
+        // 数据库连接
+        Connection connection = null;
+
+        // 预编译的Statement，使用预编译的Statement提高数据库性能
+        PreparedStatement statement = null;
+
+        // 结果集
+        int row = 0;
+
+
+        try {
+
+            // 通过驱动管理类获取数据库链接
+            connection = getConnection();
+
+            // 定义sql语句 ?表示占位符
+            String sql = "delete from `" + table + "`";//where `domain` = ? and `module` = ? and `method` = ?";
+            if (condition != null && condition.length() > 0) {
+                sql = sql + " where " + condition;//"`domain` = ? and `module` = ? and `method` = ?";
+            }
+
+            // 获取预处理statement
+            statement = connection.prepareStatement(sql);
+
+            // 设置参数，第一个参数为sql语句中参数的序号（从1开始），第二个参数为设置的参数值
+            if (binds != null) {
+                for (int i = 1; i <= binds.length; i++) {
+                    bind(statement,binds[i - 1],i);
+                }
+            }
+
+            // 向数据库发出sql执行查询，查询出结果集
+            row = statement.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            close(connection,null,statement);
+        }
+
+        return row;
+    }
+
+    public int execute(String sql, Object[] binds) {
+
+        // 数据库连接
+        Connection connection = null;
+
+        // 预编译的Statement，使用预编译的Statement提高数据库性能
+        PreparedStatement statement = null;
+
+        // 结果集
+        int row = 0;
+
+        try {
+
+            // 通过驱动管理类获取数据库链接
+            connection = getConnection();
+
+            // 获取预处理statement
+            statement = connection.prepareStatement(sql);
+
+            // 设置参数，第一个参数为sql语句中参数的序号（从1开始），第二个参数为设置的参数值
+            if (binds != null) {
+                for (int i = 1; i <= binds.length; i++) {
+                    bind(statement,binds[i - 1],i);
+                }
+            }
+
+            // 向数据库发出sql执行查询，查询出结果集
+            row = statement.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            close(connection,null,statement);
+        }
+
+        return row;
     }
 }

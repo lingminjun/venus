@@ -4,33 +4,9 @@
     <meta charset="utf-8">
     <title>VENUS-API-GW</title>
 
-    <script language="JavaScript" type="text/javascript" src="ext/cj/sha1.js"></script>
-    <script language="JavaScript" type="text/javascript" src="ext/cj/md5.js"></script>
-    <script language="JavaScript" type="text/javascript" src="ext/cj/sha256.js"></script>
-
-    <script language="JavaScript" type="text/javascript" src="ext/jsbn.js"></script>
-    <script language="JavaScript" type="text/javascript" src="ext/jsbn2.js"></script>
-    <script language="JavaScript" type="text/javascript" src="ext/prng4.js"></script>
-    <script language="JavaScript" type="text/javascript" src="ext/rng.js"></script>
-    <script language="JavaScript" type="text/javascript" src="ext/rsa.js"></script>
-    <script language="JavaScript" type="text/javascript" src="ext/rsa2.js"></script>
-    <script language="JavaScript" type="text/javascript" src="ext/base64.js"></script>
-
-    <script language="JavaScript" type="text/javascript" src="jsrsasign/rsapem-1.1.js"></script>
-    <script language="JavaScript" type="text/javascript" src="jsrsasign/rsasign-1.2.js"></script>
-    <script language="JavaScript" type="text/javascript" src="jsrsasign/asn1hex-1.1.js"></script>
-    <script language="JavaScript" type="text/javascript" src="jsrsasign/crypto-1.1.js"></script>
-    <script language="JavaScript" type="text/javascript" src="jsrsasign/pkcs5pkey-1.0.js"></script>
-    <script language="JavaScript" type="text/javascript" src="jsrsasign/base64x-1.1.js"></script>
-    <script language="JavaScript" type="text/javascript" src="jsrsasign/keyutil-1.0.js"></script>
-
-    <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript">
-        function upload() {
-
-            // 重新组装数据
-
-
+        function xupload() {
             // 调用post请求
             $.ajax({
                 //几个参数需要注意一下
@@ -39,14 +15,16 @@
                 url: "/gw.do" ,//url
                 data: $('#form1').serialize(),
                 success: function (result) {
-                    console.log(result);//打印服务端返回的数据(调试用)
-                    if (result.resultCode == 200) {
-                        alert("SUCCESS");
+                    //{"stat":{"cid":"c0a8007366b5002a0000000e0269fca0","code":0,"stateList":[],"systime":1543370043142},"content":[{"success":true,"apis":[]}]}
+
+                    if (result.stat.code == 0) {
+                        alert("SUCCESS \nAffective:" + JSON.stringify(result.content[0].apis));
+                    } else {
+                        alert("Upload APIs Failed!");
                     }
-                    ;
                 },
                 error : function() {
-                    alert("异常！");
+                    alert("Upload APIs Failed!");
                 }
             });
         }
@@ -55,10 +33,9 @@
 <body>
     <div id="form-div">
         <form id="form1" onsubmit="return false" action="##" method="post">
-            <p>接口名：<input name="selector" type="text" id="selector" tabindex="1" size="100" value=""/></p>
-            <p>接&nbsp;&nbsp;口：<input name="api" type="text" id="api" tabindex="2" size="100" value=""/></p>
-            <p>私&nbsp;&nbsp;钥：<input name="privateKey" type="text" id="privateKey" tabindex="3" size="100" value=""/></p>
-            <p><input type="button" value="提交" onclick="upload()">&nbsp;<input type="reset" value="重置"></p>
+            <p>接&nbsp;&nbsp;口：<input name="API" type="text" id="API" tabindex="1" size="100" value=""/></p>
+            <p>签&nbsp;&nbsp;名：<input name="_sig" type="text" id="_sig" tabindex="2" size="100" value=""/></p>
+            <p><input type="button" value="提交" onclick="xupload()">&nbsp;<input type="reset" value="重置"></p>
         </form>
     </div>
 </body>

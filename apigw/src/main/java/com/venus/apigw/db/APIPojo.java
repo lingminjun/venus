@@ -32,9 +32,25 @@ public final class APIPojo implements Serializable {
     public Integer status;//状态:0普通接口;1开放平台接口;-1禁用;
     public Integer mock;
 
-    public Long create;
+    public Long created;
     public Long modified;
 
+    public Long upstamp; //时间戳
+    public String thestamp; //时间戳,非数字形式
+    public Long prestamp;  //前一个发布的时间戳
+    public String md5;     //json的md5,查看是否更新
+
+    public Integer rollback;//回滚删除
+
+    //    public Integer deleted;     //是否删除
+
+    public String getAPISelector() {
+        if (module == null) {
+            return "" + domain + "." + domain + "." + method;
+        } else {
+            return "" + domain + "." + module + "." + method;
+        }
+    }
 
     private ESBAPIInfo info;
     public ESBAPIInfo getInfo() {

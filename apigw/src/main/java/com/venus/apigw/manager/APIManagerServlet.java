@@ -3,7 +3,7 @@ package com.venus.apigw.manager;
 import com.alibaba.fastjson.JSON;
 import com.venus.apigw.common.BaseServlet;
 import com.venus.apigw.db.APIPojo;
-import com.venus.apigw.db.DB;
+import com.venus.apigw.db.DBUtil;
 import com.venus.esb.ESB;
 import com.venus.esb.ESBAPIContext;
 import com.venus.esb.ESBAPIInfo;
@@ -75,53 +75,51 @@ public class APIManagerServlet extends BaseServlet {
             return;
         }
 
-        //更新接口 (TODO: 支持批量)
-        String selector = params.get("APISelector");
-        if (selector == null || selector.length() == 0) {
-            try {
-                out(context, ESBExceptionCodes.PARAMETER_ERROR("参数设置错误，必填APISelector参数"), null, resp);
-            } catch (ESBException e) {
-                e.printStackTrace();
-                logger.error("参数设置错误，必填APISelector参数", e);
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
-            }
-            return;
-        }
-
-        String apiInfo = params.get("API");
-
-        //暂时不支持更新
-        if (apiInfo != null && apiInfo.length() > 0) {
-            // 插入数据库。暂时不实现
-            List<ESBAPIInfo> list = JSON.parseArray(apiInfo,ESBAPIInfo.class);
-            for (ESBAPIInfo api : list) {
-                APIPojo pojo = new APIPojo();
-                pojo.modified = System.currentTimeMillis();
-                pojo.domain = api.api.domain;
-                pojo.module = api.api.module;
-                pojo.method = api.api.methodName;
-                pojo.detail = api.api.desc;
-                pojo.owner = api.api.owner;
-                pojo.security = api.api.security;
-                pojo.status = 0;
-                pojo.json = JSON.toJSONString(api,ESBConsts.FASTJSON_SERIALIZER_FEATURES);
-                DB.upinsert("apigw_api",new String[]{"domain","module","method","json","detail","owner","security","status","modified"},pojo);
-            }
-        }
-
-        String[] ss = selector.split(",");
-        if (ss != null) {
-            for (String sel : ss) {
+        String thestamp = params.get("ROLLBACK_STAMP");
+        List<String> sels = new ArrayList<>();
+        boolean rollback = false;
+        if (thestamp != null && thestamp.length() > 0) {
+            rollback = true;
+            System.out.println("注意，有回滚动作！！！！");
+            List<String> selectors = DBUtil.rollback(thestamp);
+            for (String sel : selectors) {
                 ESB.bus().refresh(sel);
             }
+            sels.addAll(selectors);
         } else {
-            ESB.bus().refresh(selector);
+            System.out.println("注意，发布新的API！！！！");
+            //更新接口
+            String apiInfo = params.get("API");
+
+            //暂时不支持更新
+            if (apiInfo != null && apiInfo.length() > 0) {
+                // 插入数据库。暂时不实现
+                List<ESBAPIInfo> list = JSON.parseArray(apiInfo, ESBAPIInfo.class);
+
+                if (list.size() > 0) {
+                    List<String> selectors = DBUtil.upapis(list);
+                    for (String sel : selectors) {
+                        ESB.bus().refresh(sel);
+                    }
+                    sels.addAll(selectors);
+                }
+            }
+
         }
 
         List<ESBResponse> results = new ArrayList<>();
         ESBResponse success = new ESBResponse();
-        success.result = "{\"success\":true}";
+        String json = JSON.toJSONString(sels);
+        success.result = "{\"success\":true,\"apis\":" + json + "}";
         results.add(success);
+
+        if (sels.size() > 0) {
+            if (rollback) {
+                logger.info("注意:回滚接口" + json);
+            } else {
+                logger.info("注意:更新接口" + json);
+            }
+        }
 
         try {
             out(context,null,results,resp);

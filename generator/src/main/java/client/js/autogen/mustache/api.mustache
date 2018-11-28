@@ -1,0 +1,50 @@
+// Auto Generated.  DO NOT EDIT!
+/**
+  * @class sf.b2c.mall.api.{{methodName}}
+  * @param  {Object} $
+  * @param  {Object} can
+  * @param  {Object} _
+  * @param  {can.Construct} Comm
+  * @param  {Object} SecurityType
+  * @return {can.Construct}
+  */
+define(
+'sf.b2c.mall.api.{{methodName}}',
+[
+  'zepto',
+  'can',
+  'underscore',
+  'sf.b2c.mall.framework.comm',
+  'sf.b2c.mall.api.security.type'
+],
+function($, can, _, Comm, SecurityType) {
+  'use strict';
+
+  return Comm.extend({
+    api: {
+      METHOD_NAME: '{{methodName}}',
+      SECURITY_TYPE: {{securityType}}.name,
+      REQUIRED: {
+        {{#parameterInfoList}}
+        {{#isRequired}}
+        '{{name}}': '{{type}}'{{^last}},{{/last}}
+        {{/isRequired}}
+        {{/parameterInfoList}}
+      },
+      OPTIONAL: {
+        {{#parameterInfoList}}
+        {{^isRequired}}
+        '{{name}}': '{{type}}'{{^last}},{{/last}}
+        {{/isRequired}}
+        {{/parameterInfoList}}
+      },
+      VERIFY:{
+      },
+      ERROR_CODE: {
+        {{#errorCodeList}}
+        '{{code}}': '{{desc}}'{{^last}},{{/last}}
+        {{/errorCodeList}}
+      }
+    }
+  });
+});

@@ -5,6 +5,9 @@
         <property name="dubbo.registry.url" description="dubbo注册地址" required="true"/>
         <property name="dubbo.reference.version" description="dubbo服务版本号" required="true"/>
     </group>
+    <group name="ducoment">
+        <property name="com.venus.apigw.open.ducoment" description="文档定义" required="true"/>
+    </group>
     <group name="risk">
         <property name="com.venus.apigw.risk.black.ips.path" description="ip黑名单地址" required="false"/>
         <property name="com.venus.apigw.risk.vfcode.check.url" description="图片验证码" required="false"/>
