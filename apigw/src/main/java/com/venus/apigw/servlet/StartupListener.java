@@ -1,5 +1,6 @@
 package com.venus.apigw.servlet;
 
+import com.alibaba.dubbo.config.ProtocolConfig;
 import com.venus.apigw.config.GWConfig;
 import com.venus.apigw.manager.APIManager_New;
 import com.venus.esb.lang.ESBConsts;
@@ -38,6 +39,7 @@ public class StartupListener implements ServletContextListener {
     }
 
     public void contextDestroyed(ServletContextEvent arg0) {
-
+        System.out.println("主动关闭Dubbo");
+        ProtocolConfig.destroyAll();
     }
 }
