@@ -81,6 +81,20 @@ public final class GWAPIHelper {
         return params.get(ESBSTDKeys.SIGN_KEY);
     }
 
+    // 添加 refresh接口和sso接口
+    public static String uploadESBSpecialAPIs(String gwHost, int gwPort, String rsaPriKey) throws Exception {
+        StringBuilder builder = new StringBuilder("[");
+        builder.append(REFRESH_API);
+        builder.append(",");
+        builder.append(SSO_API);
+        builder.append("]");
+        HashMap<String,String> params = new HashMap<>();
+        params.put("API",builder.toString());
+        addSign(rsaPriKey,params);
+        String result = HTTP.post(gwAPIUrl(gwHost,gwPort),params);
+        return result;
+    }
+
     private static String gwAPIUrl(String gwHost, int gwPort) {
         if (gwPort == 443) {
             return "https://" + gwHost + "/gw.do";
@@ -155,4 +169,7 @@ public final class GWAPIHelper {
             }
         }
     }
+
+    private static final String REFRESH_API = "{\"api\":{\"desc\":\"刷新token\",\"detail\":\"\",\"domain\":\"esb\",\"methodName\":\"ESBSpecial\",\"module\":\"auth\",\"needVerify\":false,\"openAPI\":false,\"owner\":\"\",\"params\":[{\"defaultValue\":\"\",\"desc\":\"secret token\",\"isArray\":false,\"name\":\"_stk\",\"required\":true,\"type\":\"java.lang.String\"},{\"defaultValue\":\"\",\"desc\":\"refresh token\",\"isArray\":false,\"name\":\"_rtk\",\"required\":true,\"type\":\"java.lang.String\"}],\"returned\":{\"coreType\":\"com.venus.esb.lang.ESBToken\",\"declareType\":\"com.venus.esb.lang.ESBToken\",\"desc\":\"令牌认证类型\",\"displayType\":\"com.venus.esb.lang.ESBToken\",\"finalType\":\"com.venus.esb.lang.ESBToken\",\"isArray\":false,\"type\":\"com.venus.esb.lang.ESBToken\"},\"security\":256,\"structs\":{\"com.venus.esb.lang.ESBToken\":{\"desc\":\"令牌认证类型\",\"fields\":[{\"desc\":\"认证是否成功\",\"isArray\":false,\"name\":\"success\",\"required\":false,\"type\":\"boolean\"},{\"desc\":\"access_token：表示访问令牌，必选项。将被写入到cookie，js可读（httpOnly=false）\",\"isArray\":false,\"name\":\"token\",\"required\":false,\"type\":\"java.lang.String\"},{\"desc\":\"secret_token: 用于在不同domain间传递csrftoken, 只能在https(secure=true)传入, 将被写入到cookie，js不可读（httpOnly=true）\",\"isArray\":false,\"name\":\"stoken\",\"required\":false,\"type\":\"java.lang.String\"},{\"desc\":\"refresh_token：用于刷新access_token（同理会刷新secret_token），可选项，不写入cookie，客户端保留好。\",\"isArray\":false,\"name\":\"refresh\",\"required\":false,\"type\":\"java.lang.String\"},{\"desc\":\"issu_key：颁发公钥，加签秘钥（私钥保存在token中），必选项，不写入cookie，客户端保留好。\",\"isArray\":false,\"name\":\"key\",\"required\":false,\"type\":\"java.lang.String\"},{\"desc\":\"expires_in：表示过期时间点，单位为秒。此字段随为entrust，但只有等于零时才被网关覆盖\",\"isArray\":false,\"name\":\"expire\",\"required\":false,\"type\":\"long\"},{\"desc\":\"scope：表示权限范围，如果与客户端申请的范围一致，此项可省略。推荐【global,user,device,token,temporary】,可自定义\",\"isArray\":false,\"name\":\"scope\",\"required\":false,\"type\":\"java.lang.String\"},{\"desc\":\"设备did\",\"isArray\":false,\"name\":\"did\",\"required\":false,\"type\":\"java.lang.String\"},{\"desc\":\"用户id\",\"isArray\":false,\"name\":\"uid\",\"required\":false,\"type\":\"java.lang.String\"},{\"desc\":\"账号id\",\"isArray\":false,\"name\":\"acct\",\"required\":false,\"type\":\"java.lang.String\"}],\"type\":\"com.venus.esb.lang.ESBToken\"}}}}";
+    private static final String SSO_API = "{\"api\":{\"desc\":\"三方授权或者免登接口声明\",\"detail\":\"\",\"domain\":\"esb\",\"methodName\":\"ESBSpecial\",\"module\":\"sso\",\"needVerify\":false,\"openAPI\":false,\"owner\":\"\",\"params\":[{\"defaultValue\":\"\",\"desc\":\"授权域用sso token换取user token\",\"isArray\":false,\"name\":\"_sso_tk\",\"required\":false,\"type\":\"java.lang.String\"},{\"defaultValue\":\"\",\"desc\":\"有user token的应用授权sso token时需要用到secret token\",\"isArray\":false,\"name\":\"_stk\",\"required\":false,\"type\":\"java.lang.String\"},{\"defaultValue\":\"\",\"desc\":\"请求免登或者需要授权的 Application Id\",\"isArray\":false,\"name\":\"_sso_aid\",\"required\":false,\"type\":\"int\"},{\"defaultValue\":\"\",\"desc\":\"请求免登或者需要授权的 device Id\",\"isArray\":false,\"name\":\"_sso_did\",\"required\":false,\"type\":\"long\"},{\"defaultValue\":\"\",\"desc\":\"请求免登或者需要授权的域\",\"isArray\":false,\"name\":\"_sso_domain\",\"required\":false,\"type\":\"java.lang.String\"}],\"returned\":{\"coreType\":\"com.venus.esb.lang.ESBSSOToken\",\"declareType\":\"com.venus.esb.lang.ESBSSOToken\",\"desc\":\"sso令牌认证类型\",\"displayType\":\"com.venus.esb.lang.ESBSSOToken\",\"finalType\":\"com.venus.esb.lang.ESBSSOToken\",\"isArray\":false,\"type\":\"com.venus.esb.lang.ESBSSOToken\"},\"security\":256,\"structs\":{\"com.venus.esb.lang.ESBSSOToken\":{\"desc\":\"sso令牌认证类型\",\"fields\":[{\"desc\":\"认证是否成功\",\"isArray\":false,\"name\":\"success\",\"required\":false,\"type\":\"boolean\"},{\"desc\":\"sso_token：表示访问令牌，必选项。将被写入到cookie\",\"isArray\":false,\"name\":\"ssoToken\",\"required\":false,\"type\":\"java.lang.String\"},{\"desc\":\"expires_in：表示过期时间点，单位为秒。如果省略该参数，必须其他方式设置过期时间。\",\"isArray\":false,\"name\":\"expire\",\"required\":false,\"type\":\"long\"}],\"type\":\"com.venus.esb.lang.ESBSSOToken\"}}}}";
 }
