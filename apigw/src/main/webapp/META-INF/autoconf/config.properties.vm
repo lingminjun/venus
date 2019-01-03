@@ -1,6 +1,6 @@
 
 #需要被托管的api jar包目录
-com.venus.apigw.jarPath=/home/admin/api
+com.venus.apigw.jarPath=${com.venus.apigw.jarPath}
 
 #apigw 文档支持开放
 com.venus.apigw.open.ducoment=${com.venus.apigw.open.ducoment}
@@ -12,19 +12,16 @@ com.venus.apigw.risk.black.ips.path=${com.venus.apigw.risk.black.ips.path}
 com.venus.apigw.risk.vfcode.check.url=${com.venus.apigw.risk.vfcode.check.url}
 
 #日志输出目录
-com.venus.apigw.log.home=/home/admin/logs/apigw-deploy/
+com.venus.apigw.log.home=${com.venus.apigw.log.home}
 
 #风控系统配置
 com.venus.apigw.riskServiceRedisKeySet=
 com.venus.apigw.riskServiceRedisConfig=
 
 #oss config
-oss.bucket.accessKey=xxxx
-oss.bucket.accessSecret=xxxx
-oss.bucket.endPoint=http://oss-cn-shanghai-internal.aliyuncs.com
-com.venus.apigw.ossAccessKey=${oss.bucket.accessKey}
-com.venus.apigw.ossAccessSecret=${oss.bucket.accessSecret}
-com.venus.apigw.ossEndPoint=${oss.bucket.endPoint}
+oss.bucket.accessKey=${oss.bucket.accessKey}
+oss.bucket.accessSecret=${oss.bucket.accessSecret}
+oss.bucket.endPoint=${oss.bucket.endPoint}
 oss.bucket.user.private=${oss.bucket.user.private}
 oss.bucket.order.info=${oss.bucket.order.info}
 oss.bucket.public=${oss.bucket.public}
@@ -45,7 +42,7 @@ com.venus.esb.observer=com.venus.apigw.manager.ESBBraveObserver
 com.venus.esb.loader=com.venus.apigw.manager.ESBHotAPILoader
 com.venus.esb.verify=com.venus.apigw.manager.ESBThirdPartVerify
 com.venus.esb.logger=com.venus.apigw.manager.ESBLogger
-com.venus.esb.apis.dir=/admin/home/apis/
+com.venus.esb.apis.dir=${com.venus.esb.apis.dir}
 
 #esb认证相关
 com.venus.esb.rsa.pub.key=${com.venus.esb.rsa.pub.key}

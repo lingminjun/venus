@@ -1,25 +1,35 @@
 package com.venus.apigw.manager;
 
+import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.config.ApplicationConfig;
 import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
+import com.alibaba.dubbo.remoting.zookeeper.ChildListener;
+import com.alibaba.dubbo.remoting.zookeeper.StateListener;
+import com.alibaba.dubbo.remoting.zookeeper.ZookeeperClient;
+import com.alibaba.dubbo.remoting.zookeeper.curator.CuratorZookeeperTransporter;
+import com.alibaba.fastjson.JSON;
 import com.venus.apigw.config.GWConfig;
 import com.venus.apigw.document.InfoServlet;
 import com.venus.apigw.document.entities.ApiMethodInfo;
 import com.venus.esb.ESBAPIInfo;
 import com.venus.esb.annotation.ESBGroup;
+import com.venus.esb.config.ESBConfigCenter;
 import com.venus.esb.helper.ESBAPIHelper;
+import com.venus.esb.lang.ESBT;
 import org.apache.catalina.loader.WebappClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+import javax.management.ObjectName;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
@@ -33,7 +43,7 @@ import java.util.jar.JarFile;
  */
 public final class APIManager_New {
     private static final Logger logger = LoggerFactory.getLogger(APIManager_New.class);
-
+    private static final String GW_NODE_ROOT = "/venus-gw";
 
     /**
      * 单例
@@ -47,207 +57,152 @@ public final class APIManager_New {
     }
 
     private APIManager_New() {
+        String registor = ESBConfigCenter.instance().getRegistry();
+        if (registor != null && registor.length() > 0) {
+            zkClient = new CuratorZookeeperTransporter().connect(URL.valueOf(registor));//创建zk客户端，启动会话
+            zkClient.addChildListener(GW_NODE_ROOT, listener);
+//            zkClient.addStateListener(new StateListener() {
+//                @Override
+//                public void stateChanged(int i) {
+//
+//                }
+//            });
+        }
+
     }
 
     private Map<String,ESBAPIInfo> apis = new ConcurrentHashMap<>();
     private ServletContext context = null;
 
+    private List<String> hosts = new ArrayList<>();
+    private ZookeeperClient zkClient = null;
+    private ChildListener listener = new ChildListener() {
+        @Override
+        public void childChanged(String s, List<String> list) {
+            hosts.clear();
+            hosts.addAll(list);
+            System.out.println("\n网关服务列表：\n" + JSON.toJSONString(list));
+        }
+    };
+
+    public List<String> getHosts() {
+        return hosts;
+    }
+
+    public String getHttpIP() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public int getHttpPort() {
+        try {
+            MBeanServer server = null;
+            if (MBeanServerFactory.findMBeanServer(null).size() > 0) {
+                server = MBeanServerFactory.findMBeanServer(null).get(0);
+            }
+
+            Set names = server.queryNames(new ObjectName("Catalina:type=Connector,*"), null);
+            Iterator iterator = names.iterator();
+            ObjectName name = null;
+            while (iterator.hasNext()) {
+                name = (ObjectName) iterator.next();
+                String protocol = server.getAttribute(name, "protocol").toString();
+                String scheme = server.getAttribute(name, "scheme").toString();
+                String port = server.getAttribute(name, "port").toString();
+                System.out.println(protocol + " : " + scheme + " : " + port);
+                if (protocol.toUpperCase().startsWith("HTTP") && scheme.equalsIgnoreCase("http")) {
+                    return ESBT.integer(port);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 8080;//默认端口
+    }
+
+    public static void listClientIP() {
+        Enumeration<NetworkInterface> netInterfaces = null;
+        try {
+            netInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (netInterfaces.hasMoreElements()) {
+                NetworkInterface ni = netInterfaces.nextElement();
+                System.out.println("DisplayName:" + ni.getDisplayName());
+                System.out.println("Name:" + ni.getName());
+                Enumeration<InetAddress> ips = ni.getInetAddresses();
+                while (ips.hasMoreElements()) {
+                    System.out.println("IP:" + ips.nextElement().getHostAddress());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+//        Enumeration<NetworkInterface> netInterfaces = null;
+//        try {
+//            netInterfaces = NetworkInterface.getNetworkInterfaces();
+//            while (netInterfaces.hasMoreElements()) {
+//                NetworkInterface ni = netInterfaces.nextElement();
+//                System.out.println("DisplayName:" + ni.getDisplayName());
+//                System.out.println("Name:" + ni.getName());
+//                Enumeration<InetAddress> ips = ni.getInetAddresses();
+//                while (ips.hasMoreElements()) {
+//                    System.out.println("IP:" + ips.nextElement().getHostAddress());
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+    }
+
     //加载完善
     public void ready(ServletContextEvent sce) {
         context = sce.getServletContext();
+        //注册服务
+        registerHosts();
+    }
 
-        loadAPIInfo(sce);
+    //注销服务
+    public void destroy() {
+        unregisterHosts();
+    }
 
-        //代码迁移
-        if (GWConfig.getInstance().isOpenAPIDocument()) {
-            Collection<ESBAPIInfo> esbApis = apis.values();
-            List<ApiMethodInfo> methods = convertToMethodInfo(esbApis);
-            InfoServlet.setApiMethodInfos(methods.toArray(new ApiMethodInfo[0]));
+    private String LOCAL_IP = null;
+    private int LOCAL_PORT = 8080;
+
+    public String currentClient() {
+        if (LOCAL_IP != null) {
+            return LOCAL_IP + ":" + LOCAL_PORT;
+        }
+        return null;
+    }
+
+    private void registerHosts() {
+        LOCAL_IP = getHttpIP();
+        if (LOCAL_IP != null && zkClient != null) {
+            LOCAL_PORT = getHttpPort();
+            zkClient.create(GW_NODE_ROOT + "/" + LOCAL_IP + ":" + LOCAL_PORT, false);
+        }
+    }
+
+    private void unregisterHosts() {
+        if (zkClient != null && LOCAL_IP != null) {
+            zkClient.delete(GW_NODE_ROOT + "/" + LOCAL_IP + ":" + LOCAL_PORT);
+            zkClient.removeChildListener(GW_NODE_ROOT, listener);
+            zkClient.close();
+            zkClient = null;
+            System.out.println("关闭网关注册【" + GW_NODE_ROOT + "/" + LOCAL_IP + ":" + LOCAL_PORT + "】");
         }
     }
 
     public ESBAPIInfo getAPI(String selector) {
-
-
         return apis.get(selector);
     }
 
-    // 加载 jar api
-    private void loadAPIInfo(ServletContextEvent sce) {
-        try {
-
-//            List<ESBAPIInfo> list = JSON.parseArray(json,ESBAPIInfo.class);
-//            for (ESBAPIInfo api : list) {
-//                apis.put(api.api.getAPISelector(),api);
-//            }
-//
-//            list = JSON.parseArray(json1,ESBAPIInfo.class);
-//            for (ESBAPIInfo api : list) {
-//                apis.put(api.api.getAPISelector(),api);
-//            }
-
-            WebappClassLoader loader = (WebappClassLoader)getClass().getClassLoader();
-            File apiJarDirectory = new File(GWConfig.getInstance().getApiJarPath());
-
-
-            ApplicationConfig application = new ApplicationConfig();
-            application.setName(GWConfig.getInstance().getApplicationName());
-            // 连接注册中心配置
-            String[] addressArray = GWConfig.getInstance().getZkAddress().split(" ");
-            List<RegistryConfig> registryConfigList = new LinkedList<RegistryConfig>();
-            for (String zkAddress : addressArray) {
-                RegistryConfig registry = new RegistryConfig();
-                registry.setAddress(zkAddress);
-                registry.setProtocol("dubbo");
-                if (GWConfig.isDebug) {
-                    Socket socket = new Socket();
-                    try {
-                        int index1 = zkAddress.indexOf("://");
-                        int index2 = zkAddress.lastIndexOf(":");
-                        if (index1 < 0) {index1 = 0;}
-                        String domain = zkAddress.substring(index1 + 3, index2);
-                        String port = zkAddress.substring(index2 + 1);
-                        socket.connect(new InetSocketAddress(domain, Integer.parseInt(port)), 1000);
-                        registryConfigList.add(registry);
-                    } catch (Exception e) {
-                        // do nothing
-                    } finally {
-                        socket.close();
-                    }
-                } else {
-                    registryConfigList.add(registry);
-                }
-            }
-
-            //业务服务
-            if (apiJarDirectory.exists() && apiJarDirectory.isDirectory()) {
-                File[] files = apiJarDirectory.listFiles(new FilenameFilter() {
-                    @Override
-                    public boolean accept(File file, String s) {
-                        return s.endsWith(".jar");
-                    }
-                });
-                if (files != null) {
-                    for (File f : files) {
-                        JarFile jf = null;
-                        try {
-                            jf = new JarFile(f);
-                            if ("dubbo".equals(jf.getManifest().getMainAttributes().getValue("Api-Dependency-Type"))) {
-                                String ns = jf.getManifest().getMainAttributes().getValue("Api-Export");
-                                String[] names = ns.split(" ");
-                                loader.addRepository(f.toURI().toURL().toString());
-                                for (String name : names) {
-                                    if (name != null) {
-                                        name = name.trim();
-                                        if (name.length() > 0) {
-                                            Class<?> clazz = Class.forName(name);
-
-                                            //现在走ESB,这个方案实际不需要service
-                                            Object service = loadService(application,registryConfigList,jf,clazz);
-
-                                            if (service == null) {
-                                                logger.error("cannot find dubbo service for " + clazz.getName());
-                                            }
-
-//                                            ApiManager.parseApi(clazz, service);
-                                            try {
-                                                List<ESBAPIInfo> esbApis = parseApi(clazz);
-                                                //将api存起来
-                                                if (esbApis != null) {
-                                                    for (ESBAPIInfo api : esbApis) {
-                                                        if (api.api != null) {
-                                                            apis.put(api.api.getAPISelector(), api);
-                                                        }
-                                                    }
-                                                }
-                                            } catch (Throwable e) {
-                                                logger.error("parse dubbo service api error " + clazz.getName());
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (Throwable t) {
-                            logger.error("load api failed. " + f.getName(), t);
-                        } finally {
-                            if (jf != null) {
-                                jf.close();
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Throwable t) {
-            logger.error("load api failed.", t);
-        }
-    }
-
     private static Object static_service = new Object();
-    private static Object loadService(ApplicationConfig application,List<RegistryConfig> registryConfigList, JarFile jf, Class<?> clazz ) throws IOException {
-        //现在走ESB,service
-        if (static_service != null) {
-            return static_service;
-        }
-
-
-        // 注意：ReferenceConfig为重对象，内部封装了与注册中心的连接，以及与服务提供方的连接
-        // 引用远程服务
-        ReferenceConfig reference = new ReferenceConfig(); // 此实例很重，封装了与注册中心的连接以及与提供者的连接，请自行缓存，否则可能造成内存和连接泄漏
-        reference.setApplication(application);
-        if (registryConfigList.size() > 0) {
-            reference.setRegistries(registryConfigList);// 多个注册中心可以用setRegistries()
-        }
-        reference.setInterface(clazz);
-        reference.setCheck(false);
-        reference.setAsync(false);
-        if (GWConfig.isDebug) {
-            String ver = jf.getManifest().getMainAttributes().getValue("Api-Debug-Version");
-            if (ver != null && ver.length() > 0) {
-                reference.setVersion(ver);
-            } else if (GWConfig.getInstance().getServiceVersion() != null
-                    && !GWConfig.getInstance().getServiceVersion().isEmpty()) {
-                reference.setVersion(GWConfig.getInstance().getServiceVersion());
-            }
-        } else {
-            if (GWConfig.getInstance().getServiceVersion() != null
-                    && !GWConfig.getInstance().getServiceVersion().isEmpty()) {
-                reference.setVersion(GWConfig.getInstance().getServiceVersion());
-            }
-        }
-        // 和本地bean一样使用xxxService
-        reference.setRetries(0);
-        Object service = null;
-        if (GWConfig.isDebug) {
-            if (registryConfigList.size() > 0) {
-                try {
-                    service = reference.get(); // 注意：此代理对象内部封装了所有通讯细节，对象较重，请缓存复用
-                } catch (Exception e) {
-                    logger.error("get reference failed. " + clazz.getName(), e);
-                    service = new Object();
-                }
-            } else {
-                service = null;
-            }
-        } else {
-//                                                service = new Object();
-            service = reference.get(); // 注意：此代理对象内部封装了所有通讯细节，对象较重，请缓存复用
-        }
-        return service;
-    }
-
-    public static List<ESBAPIInfo> parseApi(Class<?> clazz) {
-        ESBGroup groupAnnotation = clazz.getAnnotation(ESBGroup.class);
-        if (groupAnnotation == null) {
-            return null;
-        }
-
-        List<ESBAPIInfo> list = ESBAPIHelper.generate(clazz,null,true);
-        if (list.size() == 0) {
-            throw new RuntimeException("[API] api method not found. class:" + clazz.getName());
-        }
-        return list;
-    }
-
     public static ApiMethodInfo convertToMethodInfo(ESBAPIInfo info) {
         ApiMethodInfo apiInfo = new ApiMethodInfo();
         apiInfo.apiInfo = info;

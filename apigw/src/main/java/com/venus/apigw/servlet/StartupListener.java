@@ -39,7 +39,7 @@ public class StartupListener implements ServletContextListener {
     }
 
     public void contextDestroyed(ServletContextEvent arg0) {
-        System.out.println("主动关闭Dubbo");
+        APIManager_New.shared().destroy();
         ProtocolConfig.destroyAll();
     }
 }

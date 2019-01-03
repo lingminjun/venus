@@ -67,7 +67,8 @@ CREATE TABLE IF NOT EXISTS `apigw_api_history` (
   `rollback`  tinyint DEFAULT 0 COMMENT '表示回滚删除;' ,
 
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `UNI_IDX_ID` (`upstamp`,`domain`,`module`,`method`) USING BTREE
+  UNIQUE INDEX `UNI_IDX_ID` (`upstamp`,`domain`,`module`,`method`) USING BTREE,
+  INDEX `IDX_ID` (`domain`,`module`,`method`) USING BTREE
 )
   ENGINE=InnoDB
   DEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci

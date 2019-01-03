@@ -76,7 +76,7 @@ public final class GWAPIHelper {
     //将某个Service所有接口发布到网关
     public static String uploadSign(String jsonAPIList, String rsaPriKey) {
         HashMap<String,String> params = new HashMap<>();
-        params.put("API",jsonAPIList);
+        params.put("API_INFO",jsonAPIList);
         addSign(rsaPriKey,params);
         return params.get(ESBSTDKeys.SIGN_KEY);
     }
@@ -89,7 +89,7 @@ public final class GWAPIHelper {
         builder.append(SSO_API);
         builder.append("]");
         HashMap<String,String> params = new HashMap<>();
-        params.put("API",builder.toString());
+        params.put("API_INFO",builder.toString());
         addSign(rsaPriKey,params);
         String result = HTTP.post(gwAPIUrl(gwHost,gwPort),params);
         return result;
@@ -124,7 +124,7 @@ public final class GWAPIHelper {
     private static String deploy(List<ESBAPIInfo> list, String gwHost, int gwPort, String rsaPriKey) throws Exception {
         String json = JSON.toJSONString(list,ESBConsts.FASTJSON_SERIALIZER_FEATURES);
         HashMap<String,String> params = new HashMap<>();
-        params.put("API",json);
+        params.put("API_INFO",json);
         addSign(rsaPriKey,params);
         String result = HTTP.post(gwAPIUrl(gwHost,gwPort),params);
         return result;

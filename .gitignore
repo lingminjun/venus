@@ -58,6 +58,8 @@ node_modules
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+apigw/src/test/
+
 # Package Files #
 *.jar
 *.war

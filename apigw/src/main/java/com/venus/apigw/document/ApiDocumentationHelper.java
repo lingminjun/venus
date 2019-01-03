@@ -150,7 +150,8 @@ public class ApiDocumentationHelper {
 
         // param为符合类型时
         for (ESBAPIParam param : struct.fields) { //属性列表
-            parseStruct(groupName,structs.get(param.type),structs,list,sets);
+            String coreType = ESBT.convertCoreType(param.type);
+            parseStruct(groupName,structs.get(coreType),structs,list,sets);
         }
     }
 
@@ -211,7 +212,8 @@ public class ApiDocumentationHelper {
             //标准参数，底层必须传输或者网关自动解除包
             if (!ESBSTDKeys.isSTDKey(p.name)) {
                 // param为符合类型时
-                parseStruct(groupName,structs.get(p.type),structs,list,sets);
+                String coreType = ESBT.convertCoreType(p.type);
+                parseStruct(groupName,structs.get(coreType),structs,list,sets);
             }
         }
     }

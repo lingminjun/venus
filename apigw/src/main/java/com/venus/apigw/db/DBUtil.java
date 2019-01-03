@@ -151,6 +151,70 @@ public final class DBUtil {
         return sels;
     }
 
+    public static List<StampPojo> latestUpdateStamp() {
+        DB db = pool().db;
+
+        HashMap<String,StampPojo> stamps = new HashMap<>();
+        List<StampPojo> list = new ArrayList<>();
+        List<APIPojo> preList = queryLatestHistory(db);
+        for (APIPojo pojo : preList) {
+            StampPojo stamp = stamps.get(pojo.thestamp);
+            if (stamp == null) {
+                stamp = new StampPojo();
+                stamp.thestamp = pojo.thestamp;
+                stamp.apis = new ArrayList<>();
+                stamps.put(pojo.thestamp,stamp);
+                list.add(stamp);
+            }
+
+            String sel = pojo.getAPISelector();
+            stamp.apis.add(sel);
+        }
+
+        return list;
+    }
+
+    public static List<StampPojo> latestUpdateStamp(String selector) {
+        if (selector == null || selector.length() == 0) {
+            logger.error("api rollback failed! please input right selector.");
+            return null;
+        }
+
+        String[] ss = selector.split("\\.",-1);
+        if (ss.length != 3) {
+            logger.error("api rollback failed! please input right selector( domain.module.method ).");
+            return null;
+        }
+        String domain = ss[0];
+        String module = ss[1];
+        String method = ss[2];
+        if (domain == null || domain.length() == 0
+                || module == null || module.length() == 0
+                || method == null || method.length() == 0
+        ) {
+            logger.error("api rollback failed! please input right selector( domain.module.method ).");
+            return null;
+        }
+
+        DB db = pool().db;
+
+        HashMap<String,StampPojo> stamps = new HashMap<>();
+        List<StampPojo> list = new ArrayList<>();
+        List<APIPojo> preList = queryLatestHistory(db,domain,module,method);
+        for (APIPojo pojo : preList) {
+            StampPojo stamp = stamps.get(pojo.thestamp);
+            if (stamp == null) {
+                stamp = new StampPojo();
+                stamp.thestamp = pojo.thestamp;
+                stamps.put(pojo.thestamp,stamp);
+                list.add(stamp);
+            }
+        }
+
+        return list;
+    }
+
+
     // 还原回某个节点
     public static List<String> rollback(String thestamp) {
         long times = DateUtils.dateYYYYMMDDHHMMSSSSS(thestamp);//毫秒
@@ -207,6 +271,66 @@ public final class DBUtil {
         return sels;
     }
 
+
+    // 回滚某个接口
+    public static String rollback(String thestamp, String selector) {
+        long times = DateUtils.dateYYYYMMDDHHMMSSSSS(thestamp);//毫秒
+        if (times <= 0) {
+            logger.error("api rollback failed! please input right timestemp.");
+            return null;
+        }
+
+        if (selector == null || selector.length() == 0) {
+            logger.error("api rollback failed! please input right selector.");
+            return null;
+        }
+
+        String[] ss = selector.split("\\.",-1);
+        if (ss.length != 3) {
+            logger.error("api rollback failed! please input right selector( domain.module.method ).");
+            return null;
+        }
+        String domain = ss[0];
+        String module = ss[1];
+        String method = ss[2];
+        if (domain == null || domain.length() == 0
+                || module == null || module.length() == 0
+                || method == null || method.length() == 0
+        ) {
+            logger.error("api rollback failed! please input right selector( domain.module.method ).");
+            return null;
+        }
+
+        DB db = pool().db;
+
+        // 取待回滚数据
+        List<APIPojo> list = getBeRollback(db,domain,module,method,times);
+        if (list == null || list.size() == 0) {
+            return null;
+        }
+
+        //开始处理每一个记录
+        list.sort(API_COMP);
+        APIPojo pojo = list.get(0);
+
+        // 删除
+        if (pojo.prestamp == null || pojo.prestamp == 0) {
+            deletedAPI(db,pojo.domain,pojo.module,pojo.method);
+        } else {//更新
+            APIPojo bkpojo = getHistoryAPI(db,pojo.domain,pojo.module,pojo.method,pojo.prestamp);
+            bkpojo.rollback = 0;
+            if (bkpojo != null) {
+                db.upinsert(API_DB_TABLE,API_KEYS,bkpojo);
+                db.upinsert(API_HISTORY_DB_TABLE,API_HISTORY_KEYS,bkpojo);
+            }
+        }
+
+        // 最后删除回滚记录
+        deletedRollbackHistory(db,domain,module,method,times,thestamp);
+
+        return selector;
+    }
+
     public static APIThirdSecurityPojo getThirdPartySecurityInfo(Long tid) {
         List<APIThirdSecurityPojo> results = pool().db.query("apigw_third_party_secret","`id` = ?", new Object[]{tid}, APIThirdSecurityPojo.class);
         if (results != null && results.size() > 0) {
@@ -257,7 +381,7 @@ public final class DBUtil {
     // 查找历史的API
     private static APIPojo getHistoryAPI(DB db, String domain, String module, String method, Long timestamp) {
         List<APIPojo> pojo = db.query(API_HISTORY_DB_TABLE,
-                "`upstamp`= ? and `domain` = ? and `module` = ? and `method` = ?",
+                "`upstamp`= ? and `domain` = ? and `module` = ? and `method` = ? and `rollback` = 0",
                 new Object[]{timestamp,domain,module,method},
                 APIPojo.class);
         if (pojo != null && pojo.size() > 0) {
@@ -266,19 +390,55 @@ public final class DBUtil {
         return null;
     }
 
-    // 待回滚内容(查找历史)
-    private static List<APIPojo> getBeRollback(DB db, Long timestamp) {
+    // 查找最近历史
+    private static List<APIPojo> queryLatestHistory(DB db) {
         return db.query(API_HISTORY_DB_TABLE,
-                "`upstamp` > ? and `rollback` = ? ",
-                new Object[]{timestamp,Integer.valueOf(0)},
+                "`rollback` = ? order by `upstamp` desc",
+                new Object[]{0L},
                 APIPojo.class);
     }
 
+    // 查找最近历史
+    private static List<APIPojo> queryLatestHistory(DB db, String domain, String module, String method) {
+        return db.query(API_HISTORY_DB_TABLE,
+                "`domain` = ? and `module` = ? and `method` = ? and `rollback` = 0 order by `upstamp` desc",
+                new Object[]{domain,module,method},
+                APIPojo.class);
+    }
+
+    // 待回滚内容(查找历史)
+    private static List<APIPojo> getBeRollback(DB db, Long timestamp) {
+        return db.query(API_HISTORY_DB_TABLE,
+                "`upstamp` > ? and `rollback` = 0 ",
+                new Object[]{timestamp},
+                APIPojo.class);
+    }
+
+    // 单个接口的待回滚内容
+    private static List<APIPojo> getBeRollback(DB db, String domain, String module, String method, Long timestamp) {
+        return db.query(API_HISTORY_DB_TABLE,
+                "`domain` = ? and `module` = ? and `method` = ? and `upstamp` > ? and `rollback` = 0 ",
+                new Object[]{timestamp,domain,module,method},
+                APIPojo.class);
+    }
+
+    // 删除批量
     private static void deletedRollbackHistory(DB db, Long timestamp, String thestamp) {
-        String sql = "UPDATE `" + API_HISTORY_DB_TABLE + "` SET `rollback` = 1 WHERE `upstamp` > ? ";
+        String sql = "UPDATE `" + API_HISTORY_DB_TABLE + "` SET `rollback` = 1 WHERE `upstamp` > ? and `rollback` = 0";
         //标记回滚
         logger.info("注意：回滚到节点["+thestamp+"]");
         db.execute(sql,new Object[]{timestamp});
+//        db.delete(API_HISTORY_DB_TABLE,
+//                "`timestamp` > ? ",
+//                new Object[]{timestamp});
+    }
+
+    // 删除批量-单个
+    private static void deletedRollbackHistory(DB db, String domain, String module, String method, Long timestamp, String thestamp) {
+        String sql = "UPDATE `" + API_HISTORY_DB_TABLE + "` SET `rollback` = 1 WHERE `domain` = ? and `module` = ? and `method` = ? and `upstamp` > ? and `rollback` = 0";
+        //标记回滚
+        logger.info("注意：回滚到节点["+thestamp+"]");
+        db.execute(sql,new Object[]{domain,module,method,timestamp});
 //        db.delete(API_HISTORY_DB_TABLE,
 //                "`timestamp` > ? ",
 //                new Object[]{timestamp});

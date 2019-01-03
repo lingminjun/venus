@@ -2,6 +2,7 @@ package com.venus.apigw.document;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.venus.apigw.common.BaseServlet;
 import com.venus.apigw.consts.ConstField;
 import com.venus.apigw.db.APIPojo;
 import com.venus.apigw.db.DBUtil;
@@ -11,8 +12,12 @@ import com.venus.apigw.manager.APIManager_New;
 import com.venus.apigw.serializable.POJOSerializerProvider;
 import com.venus.apigw.serializable.Serializer;
 import com.venus.esb.ESBAPIInfo;
+import com.venus.esb.ESBResponse;
 import com.venus.esb.annotation.ESBAPI;
 import com.venus.esb.lang.ESBConsts;
+import com.venus.esb.lang.ESBCookie;
+import com.venus.esb.lang.ESBException;
+import com.venus.esb.lang.ESBT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,17 +27,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * 获取接口信息,不做权限控制
  * @author guankaiqiang
  * modify lingminjun
  */
-public class InfoServlet extends HttpServlet {
+public class InfoServlet extends BaseServlet {
+
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(InfoServlet.class);
     private static final Serializer<Document> docs = POJOSerializerProvider.getSerializer(Document.class);
@@ -41,25 +44,6 @@ public class InfoServlet extends HttpServlet {
     private static final String RESP_CHARSET = ESBConsts.UTF8_STR;
     private static byte[] XML_HEAD = ("<?xml version='1.0' encoding='utf-8'?><?xml-stylesheet type='text/xsl' href='/xslt/apiInfo.xsl'?>").getBytes(
             ConstField.UTF8);
-    private static ApiMethodInfo[] apiMethodInfos;
-    private static Document document;
-    private static Object lock = new Object();
-
-    public static void setApiMethodInfos(final ApiMethodInfo[]... infos) {
-        synchronized (lock) {
-            if (infos != null && infos.length > 0) {
-                logger.info("api document info size {}",infos.length);
-                List infoList = new LinkedList<ApiMethodInfo>();
-                for (ApiMethodInfo[] infoArray : infos) {
-                    infoList.addAll(Arrays.asList(infoArray));
-                }
-                apiMethodInfos = new ApiMethodInfo[infoList.size()];
-                infoList.toArray(apiMethodInfos);
-            }
-            document = new ApiDocumentationHelper().getDocument(apiMethodInfos);
-            logger.info("api method list size {}",(document.apiList != null ? document.apiList.size() : 0));
-        }
-    }
 
     public static Document convertApiMethodInfos(List<ESBAPIInfo> infos) {
 
@@ -69,28 +53,19 @@ public class InfoServlet extends HttpServlet {
         }
 
         return new ApiDocumentationHelper().getDocument(apis.toArray(new ApiMethodInfo[0]));
-//            logger.info("api method list size {}",(document.apiList != null ? document.apiList.size() : 0));
-
     }
 
-    private static void reloadDocument() {
-        synchronized (lock) {
-            document = new ApiDocumentationHelper().getDocument(apiMethodInfos);
-        }
-    }
-
-    public static Document getDocument() {
-        synchronized (lock) {
-            return document;
-        }
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
 
+            Map<String,String> params = parseRequestParams(req);
+            int status = ESBT.integer(params.get("kind"),0);
+            String type = ESBT.string(params.get("type"),"xml");
+
             //修改成数据库查询接口
-            List<ESBAPIInfo> results = DBUtil.allAPIsForStatus(0);
+            List<ESBAPIInfo> results = DBUtil.allAPIsForStatus(status);
             Document document = convertApiMethodInfos(results);
 
             logger.info("api method count {}",(document.apiList != null ? document.apiList.size() : 0));
@@ -119,6 +94,11 @@ public class InfoServlet extends HttpServlet {
             resp.getWriter().write(t.getMessage());
             t.printStackTrace(resp.getWriter());
         }
+    }
+
+    @Override
+    protected List<ESBResponse> dispatchedCall(Map<String, String> params, Map<String, String> header, Map<String, ESBCookie> cookies, String body) throws ESBException {
+        return null;
     }
 }
 

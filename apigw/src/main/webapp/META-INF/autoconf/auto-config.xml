@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <config description="venus.apigw.config">
+    <group name="logger">
+        <property name="com.venus.apigw.log.home" description="日志地址" required="true"/>
+    </group>
     <group name="dubbo">
         <property name="dubbo.registry.url" description="dubbo注册地址" required="true"/>
         <property name="dubbo.reference.version" description="dubbo服务版本号" required="true"/>
@@ -35,6 +38,10 @@
         <property name="oss.bucket.accessKey" description="oss access key" required="true"/>
         <property name="oss.bucket.accessSecret" description="oss access secret" required="true"/>
         <property name="oss.bucket.endPoint" description="oss access end point" required="true"/>
+    </group>
+    <group name="api.path">
+        <property name="com.venus.apigw.jarPath" description="API地址" required="true"/>
+        <property name="com.venus.esb.apis.dir" description="API存储地址" required="true"/>
     </group>
     <script>
         <generate template="config.properties.vm" destfile="WEB-INF/classes/config.properties" charset="UTF-8"/>

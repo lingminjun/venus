@@ -274,13 +274,13 @@
                         margin-bottom: 2px;
                     }
 
-                    #internal_apis, #integrated_apis, #none_apis, #registereddevice_apis, #userlogin_apis, #other_apis, #doc_apis {
+                    #internal_apis, #integrated_apis, #none_apis, #registereddevice_apis, #accountlogin_apis, #userlogin_apis, #other_apis, #doc_apis {
                         margin: 0px 0px 5px 0px;
                         padding: 0px;
                         border: solid 1px #D4E2F1;
                     }
 
-                    #doc_apis span.state_title, #internal_apis span.state_title, #integrated_apis span.state_title, #none_apis span.state_title, #registereddevice_apis span.state_title, #userlogin_apis span.state_title, #other_apis span.state_title {
+                    #doc_apis span.state_title, #internal_apis span.state_title, #integrated_apis span.state_title, #none_apis span.state_title, #registereddevice_apis span.state_title, #accountlogin_apis span.state_title, #userlogin_apis span.state_title, #other_apis span.state_title {
                         font-weight: bold;
                     }
 
@@ -375,6 +375,7 @@
                     $("div [id='integrated_apis']").empty();
                     $("div [id='none_apis']").empty();
                     $("div [id='registereddevice_apis']").empty();
+                    $("div [id='accountlogin_apis']").empty();
                     $("div [id='userlogin_apis']").empty();
                     $("div [id='doc_apis']").empty();
 
@@ -419,9 +420,6 @@
                     if($("div [id='other_apis'] div").length > 0) {
                         $("div [id='other_apis']").show();
                     }
-                    if($("div [id='accountlogin_apis'] div").length > 0) {
-                        $("div [id='accountlogin_apis']").show();
-                    }
                     if($("div [id='integrated_apis'] div").length > 0) {
                         $("div [id='integrated_apis']").show();
                     }
@@ -430,6 +428,9 @@
                     }
                     if($("div [id='registereddevice_apis'] div").length > 0) {
                         $("div [id='registereddevice_apis']").show();
+                    }
+                    if($("div [id='accountlogin_apis'] div").length > 0) {
+                        $("div [id='accountlogin_apis']").show();
                     }
                     if($("div [id='userlogin_apis'] div").length > 0) {
                         $("div [id='userlogin_apis']").show();
@@ -710,6 +711,9 @@
                             </div>
                             <div id="registereddevice_apis" class="hide">
                                 <span>REGISTERED_DEVICE</span>
+                            </div>
+                            <div id="accountlogin_apis" class="hide">
+                                <span>ACCOUNT_LOGIN</span>
                             </div>
                             <div id="userlogin_apis" class="hide">
                                 <span>USER_LOGIN</span>

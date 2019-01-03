@@ -39,9 +39,9 @@ public class GWConfig {
         this.setOpenAPIDocument(prop.getProperty("com.venus.apigw.open.ducoment"));
         this.setBlackPath(prop.getProperty("com.venus.apigw.risk.black.ips.path"));
         this.setVfCodeCheckUrl(prop.getProperty("com.venus.apigw.risk.vfcode.check.url"));
-        this.setOssAccessKey(prop.getProperty("com.venus.apigw.ossAccessKey"));
-        this.setOssAccessSecret(prop.getProperty("com.venus.apigw.ossAccessSecret"));
-        this.setOssEndPoint(prop.getProperty("com.venus.apigw.ossEndPoint"));
+        this.setOssAccessKey(prop.getProperty("oss.bucket.accessKey"));
+        this.setOssAccessSecret(prop.getProperty("oss.bucket.accessSecret"));
+        this.setOssEndPoint(prop.getProperty("oss.bucket.endPoint"));
         this.setZkAddress(prop.getProperty("dubbo.registry.url"));
         this.setServiceVersion(prop.getProperty("dubbo.reference.version"));
 
@@ -215,7 +215,7 @@ public class GWConfig {
             this.ossAccessKey = key;
         }
         if (GWConfig.isDebug)
-            logger.info("[ApiConfig.init]com.venus.apigw.ossAccessKey:{}", this.ossAccessKey);
+            logger.info("[ApiConfig.init]oss.bucket.accessKey:{}", this.ossAccessKey);
     }
 
     public String getOssAccessKey() {
@@ -229,7 +229,7 @@ public class GWConfig {
             this.ossAccessSecret = secret;
         }
         if (GWConfig.isDebug)
-            logger.info("[ApiConfig.init]com.venus.apigw.ossAccessSecret:{}", this.ossAccessSecret);
+            logger.info("[ApiConfig.init]oss.bucket.accessSecret:{}", this.ossAccessSecret);
     }
 
     public String getOssAccessSecret() {
@@ -243,7 +243,7 @@ public class GWConfig {
             this.ossEndPoint = endPoint;
         }
         if (GWConfig.isDebug)
-            logger.info("[ApiConfig.init]com.venus.apigw.ossEndPoint:{}", this.ossEndPoint);
+            logger.info("[ApiConfig.init]oss.bucket.endPoint:{}", this.ossEndPoint);
     }
 
     public String getOssEndPoint() {

@@ -400,8 +400,13 @@ public final class DB {
     public <T extends Object> List<T> query(String table, String condition, Object[] binds, Class<T> type) {
         return query(null,table,condition,binds,type);
     }
-
+    public <T extends Object> List<T> query(String table, String condition, Object[] binds, Class<T> type, int limit) {
+        return query(null,table,condition,binds,type,limit);
+    }
     public <T extends Object> List<T> query(String scheme, String table, String condition, Object[] binds, Class<T> type) {
+        return query(scheme,table,condition,binds,type,10000);
+    }
+    public <T extends Object> List<T> query(String scheme, String table, String condition, Object[] binds, Class<T> type, int limit) {
 
         // 数据库连接
         Connection connection = null;
@@ -426,7 +431,11 @@ public final class DB {
             if (condition != null && condition.length() > 0) {
                 sql = sql + " where " + condition;//"`domain` = ? and `module` = ? and `method` = ?";
             }
-            sql = sql + " limit 10000";
+            if (limit > 0) {
+                sql = sql + " limit " + limit;
+            } else {
+                sql = sql + " limit 10000";
+            }
 
             // 获取预处理statement
             statement = connection.prepareStatement(sql);

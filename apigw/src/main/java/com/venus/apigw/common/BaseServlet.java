@@ -127,6 +127,7 @@ public abstract class BaseServlet extends HttpServlet {
                     state.code = 0;
                     state.length = (res.result == null || res.result.length() == 0) ? 2 : res.result.length();
                 }
+                apiResponse.stateList.add(state);
             }
         }
 
