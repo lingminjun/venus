@@ -3,7 +3,7 @@ package com.venus.apigw.risk;
 import com.venus.apigw.common.VFCodeUtils;
 import com.venus.apigw.config.GWConfig;
 import com.venus.esb.ESBSecurityLevel;
-import org.apache.commons.lang.StringUtils;
+import com.venus.esb.lang.ESBT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +37,11 @@ public class RiskManager {
             //对图片验证码进行验证,放个是人的操作行为
             if (rt == RiskLevel.DANGER) {
                 //此处主要是为了兼容老版本中登录图片验证码和短信验证码,因为验证码不能多次验证,只能提交个服务验证
-                if (!StringUtils.isEmpty(compatibility)) {
+                if (!ESBT.isEmpty(compatibility)) {
                     return RiskLevel.OK;
                 }
                 try {
-                    if (!StringUtils.isEmpty(captcha) && VFCodeUtils.checkVfCode(captcha,true)) {
+                    if (!ESBT.isEmpty(captcha) && VFCodeUtils.checkVfCode(captcha,true)) {
                         return RiskLevel.OK;
                     }
                 } catch (Throwable e) {
@@ -94,7 +94,7 @@ public class RiskManager {
      * @return
      */
     private RiskLevel checkIP(String ip, long ok, long denied) {
-        if (StringUtils.isEmpty(ip)) {
+        if (ESBT.isEmpty(ip)) {
             return RiskLevel.OK;
         }
 
@@ -108,7 +108,7 @@ public class RiskManager {
 
         //另外一个监控进程不断写入black文件
         String black = GWConfig.getInstance().getBlackPath();
-        if (!StringUtils.isEmpty(black)) {
+        if (!ESBT.isEmpty(black)) {
             return readIPTablesFile(black,ip,ok,denied);
         }
 

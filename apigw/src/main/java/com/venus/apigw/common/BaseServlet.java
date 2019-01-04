@@ -186,7 +186,7 @@ public abstract class BaseServlet extends HttpServlet {
             InputStream bd = request.getInputStream();
 
             String encoding = request.getCharacterEncoding();
-            if (com.alibaba.dubbo.common.utils.StringUtils.isEmpty(encoding)) {
+            if (ESBT.isEmpty(encoding)) {
                 encoding = ESBConsts.UTF8_STR;
             }
             body = IOUtils.toString(bd, encoding);
@@ -400,6 +400,8 @@ public abstract class BaseServlet extends HttpServlet {
                 cookie.setHttpOnly(c.httpOnly);
                 cookie.setSecure(c.secure);
                 cookie.setPath((c.path == null || c.path.length() == 0)? "/" : c.path);
+                //tomcat8遇到问题 在tomcat_home/conf/context.xml添加配置：
+                // <CookieProcessor className="org.apache.tomcat.util.http.LegacyCookieProcessor" />
                 cookie.setDomain((c.domain == null || c.domain.length() == 0)? "" : c.domain);
                 response.addCookie(cookie);
             } catch (Throwable e) {e.printStackTrace();}

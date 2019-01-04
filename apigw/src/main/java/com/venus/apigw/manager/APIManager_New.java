@@ -1,23 +1,14 @@
 package com.venus.apigw.manager;
 
 import com.alibaba.dubbo.common.URL;
-import com.alibaba.dubbo.config.ApplicationConfig;
-import com.alibaba.dubbo.config.ReferenceConfig;
-import com.alibaba.dubbo.config.RegistryConfig;
 import com.alibaba.dubbo.remoting.zookeeper.ChildListener;
-import com.alibaba.dubbo.remoting.zookeeper.StateListener;
 import com.alibaba.dubbo.remoting.zookeeper.ZookeeperClient;
 import com.alibaba.dubbo.remoting.zookeeper.curator.CuratorZookeeperTransporter;
 import com.alibaba.fastjson.JSON;
-import com.venus.apigw.config.GWConfig;
-import com.venus.apigw.document.InfoServlet;
 import com.venus.apigw.document.entities.ApiMethodInfo;
 import com.venus.esb.ESBAPIInfo;
-import com.venus.esb.annotation.ESBGroup;
 import com.venus.esb.config.ESBConfigCenter;
-import com.venus.esb.helper.ESBAPIHelper;
 import com.venus.esb.lang.ESBT;
-import org.apache.catalina.loader.WebappClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +17,11 @@ import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.jar.JarFile;
 
 /**
  * Created with IntelliJ IDEA.
