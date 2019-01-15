@@ -120,9 +120,9 @@ public abstract class BaseServlet extends HttpServlet {
                 ESBResponse res = result.get(i);
                 CallState state = new CallState();
                 if (res.exception != null) {
-                    state.code = e.getCode();
-                    state.msg = e.getLocalizedMessage();
-                    state.domain = e.getDomain();
+                    state.code = res.exception.getCode();
+                    state.msg = res.exception.getLocalizedMessage();
+                    state.domain = res.exception.getDomain();
                 } else {
                     state.code = 0;
                     state.length = (res.result == null || res.result.length() == 0) ? 2 : res.result.length();
@@ -261,18 +261,18 @@ public abstract class BaseServlet extends HttpServlet {
             }
 
             //填充内容
-            out(context,null,result,response);
-
+            out(context,null, result, response);
 
         } catch (ESBException e) {
             // 访问被拒绝(如签名验证失败)
             try {
                 out(context, e, null, response);
             } catch (ESBException e1) {
-                e1.printStackTrace();
+                logger.error("写请求异常",e1);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
             }
         } catch (Throwable e) {
+            logger.error("请求异常",e);
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad Request");
         }
     }
