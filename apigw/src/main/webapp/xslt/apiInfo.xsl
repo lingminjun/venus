@@ -6,7 +6,7 @@
         <html lang="zh" xml:lang="zh" xmlns="http://www.w3.org/1999/xhtml">
             <head>
                 <meta charset="UTF-8"/>
-                <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+                <script type="text/javascript" src="//res-test.globe-village.cn/js/jquery-1.11.1.min.js"></script>
                 <style type="text/css">
                     table, td, th {
                         margin: 5px;

@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.venus.apigw.common.BaseServlet;
 import com.venus.apigw.consts.ConstField;
-import com.venus.apigw.db.APIPojo;
 import com.venus.apigw.db.DBUtil;
 import com.venus.apigw.document.entities.ApiMethodInfo;
 import com.venus.apigw.document.entities.Document;
@@ -13,7 +12,6 @@ import com.venus.apigw.serializable.POJOSerializerProvider;
 import com.venus.apigw.serializable.Serializer;
 import com.venus.esb.ESBAPIInfo;
 import com.venus.esb.ESBResponse;
-import com.venus.esb.annotation.ESBAPI;
 import com.venus.esb.lang.ESBConsts;
 import com.venus.esb.lang.ESBCookie;
 import com.venus.esb.lang.ESBException;
@@ -22,12 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 获取接口信息,不做权限控制
@@ -58,8 +57,8 @@ public class InfoServlet extends BaseServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        OutputStream out = null;
         try {
-
             Map<String,String> params = parseRequestParams(req);
             int status = ESBT.integer(params.get("kind"),0);
             String type = ESBT.string(params.get("type"),"xml");
@@ -69,7 +68,7 @@ public class InfoServlet extends BaseServlet {
             Document document = convertApiMethodInfos(results);
 
             logger.info("api method count {}",(document.apiList != null ? document.apiList.size() : 0));
-            OutputStream out = resp.getOutputStream();
+            out = resp.getOutputStream();
             resp.setCharacterEncoding(RESP_CHARSET);
             String queryString = req.getQueryString();
             if (queryString == null || queryString.isEmpty()) {
@@ -91,7 +90,10 @@ public class InfoServlet extends BaseServlet {
             }
         } catch (Throwable t) {
             logger.error("parse xml for api info failed.", t);
-            resp.getWriter().write(t.getMessage());
+            if (out == null) {
+                out = resp.getOutputStream();
+            }
+            out.write(t.getMessage().getBytes());
             t.printStackTrace(resp.getWriter());
         }
     }
