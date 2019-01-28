@@ -203,8 +203,25 @@ public class APIManagerServlet extends BaseServlet {
 
 
     // 通知其他网关更新
-    private void noticeOtherGW(List<String> ips,List<String> apis, String tip) {
+    private void noticeOtherGW(List<String> tempIPs, List<String> apis, String tip) {
         if (apis == null || apis.size() == 0) {
+            return;
+        }
+
+        List<String> ips = new ArrayList<>();
+        for (String ip : tempIPs) {
+            if (ip == null || ip.length() == 0) {
+                continue;
+            }
+            //排除当前主机
+            if (ip.equals(tip)) {
+                continue;
+            }
+            ips.add(ip);
+        }
+
+        if (ips.isEmpty()) {
+            System.out.println("无需刷新网关更新返回，只有当前机器【"+tip+"】");
             return;
         }
 
@@ -221,17 +238,8 @@ public class APIManagerServlet extends BaseServlet {
         addRSASignature(params);
 
         // 遍历更新网关
-        for (String ip : apis) {
-            if (ip == null || ip.length() == 0) {
-                continue;
-            }
-            //排除当前主机
-            if (ip.equals(tip)) {
-                continue;
-            }
-
+        for (String ip : ips) {
             String url = "http://" + ip + "/gw.do";
-
             try {
                 String result = HTTP.post(url,params);
                 System.out.println("刷新网关(" + ip + ")更新返回【"+result+"】");
