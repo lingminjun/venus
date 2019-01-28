@@ -30,6 +30,12 @@ import java.util.*;
 public final class GWAPIHelper {
     //将某个jar内所有接口发布到网关
     public static String deployJar(String jarPath, String packageName, String gwHost, int gwPort, String rsaPriKey) throws Exception {
+        return deployJar(jarPath,packageName,gwHost,gwPort,rsaPriKey,null);
+    }
+    public static String deployJar(String jarPath, String packageName, String gwHost, int gwPort, String rsaPriKey, Set<Class<?>> excludeClasses) throws Exception {
+        return deployJar(jarPath,packageName,gwHost,gwPort,rsaPriKey,excludeClasses,null);
+    }
+    public static String deployJar(String jarPath, String packageName, String gwHost, int gwPort, String rsaPriKey, Set<Class<?>> excludeClasses, Set<String> excludeMethods) throws Exception {
 
         File file = new File(jarPath);
         if (file == null) {
@@ -38,28 +44,37 @@ public final class GWAPIHelper {
         EngineClassLoader loader = new EngineClassLoader();//Thread.currentThread().getContextClassLoader();
         loader.addURL(file.toURI().toURL());
         Set<Class<?>> set = PackageUtil.getClasses(packageName,loader);
-        List<ESBAPIInfo> list = loadAll(set);
+        List<ESBAPIInfo> list = loadAll(set,excludeClasses);
         if (list.size() > 0) {
-            return deploy(list,gwHost,gwPort,rsaPriKey);
+            return deploy(list,gwHost,gwPort,rsaPriKey,excludeMethods);
         }
         return null;
     }
 
     //将某个package包下所有接口发布到网关
     public static String deployPackage(String packageName, String gwHost, int gwPort, String rsaPriKey) throws Exception {
+        return deployPackage(packageName,gwHost,gwPort,rsaPriKey,null);
+    }
+    public static String deployPackage(String packageName, String gwHost, int gwPort, String rsaPriKey, Set<Class<?>> excludeClasses) throws Exception {
+        return deployPackage(packageName,gwHost,gwPort,rsaPriKey,excludeClasses,null);
+    }
+    public static String deployPackage(String packageName, String gwHost, int gwPort, String rsaPriKey, Set<Class<?>> excludeClasses, Set<String> excludeMethods) throws Exception {
         Set<Class<?>> set = PackageUtil.getClasses(packageName);
-        List<ESBAPIInfo> list = loadAll(set);
+        List<ESBAPIInfo> list = loadAll(set,excludeClasses);
         if (list.size() > 0) {
-            return deploy(list,gwHost,gwPort,rsaPriKey);
+            return deploy(list,gwHost,gwPort,rsaPriKey,excludeMethods);
         }
         return null;
     }
 
     //将某个Service所有接口发布到网关
     public static String deployService(Class<?> serviceClass, String gwHost, int gwPort, String rsaPriKey) throws Exception {
+        return deployService(serviceClass,gwHost,gwPort,rsaPriKey,null);
+    }
+    public static String deployService(Class<?> serviceClass, String gwHost, int gwPort, String rsaPriKey, Set<String> exclude) throws Exception {
         List<ESBAPIInfo> list = ESBAPIHelper.generate(serviceClass,null,true);
         if (list.size() > 0) {
-            return deploy(list,gwHost,gwPort,rsaPriKey);
+            return deploy(list,gwHost,gwPort,rsaPriKey,exclude);
         }
         return null;
     }
@@ -103,9 +118,15 @@ public final class GWAPIHelper {
         }
     }
 
-    private static List<ESBAPIInfo> loadAll(Set<Class<?>> set) {
+    private static List<ESBAPIInfo> loadAll(Set<Class<?>> set, Set<Class<?>> exclude) {
         List<ESBAPIInfo> list = new ArrayList<>();
         for (Class<?> clazz : set) {
+
+            //排除不需要的类
+            if (exclude != null && exclude.contains(clazz)) {
+                continue;
+            }
+
             ESBGroup group = clazz.getAnnotation(ESBGroup.class);
             if (group == null) {
                 continue;
@@ -121,8 +142,20 @@ public final class GWAPIHelper {
 
 
     // 发布到接口
-    private static String deploy(List<ESBAPIInfo> list, String gwHost, int gwPort, String rsaPriKey) throws Exception {
-        String json = JSON.toJSONString(list,ESBConsts.FASTJSON_SERIALIZER_FEATURES);
+    private static String deploy(List<ESBAPIInfo> list, String gwHost, int gwPort, String rsaPriKey, Set<String> exclude) throws Exception {
+        List<ESBAPIInfo> apis = new ArrayList<>();
+        if (exclude != null && exclude.size() > 0) {
+            for (ESBAPIInfo info : list) {
+                if (info.api != null && !exclude.contains(info.api.getAPISelector())) {
+                    apis.add(info);
+                }
+            }
+        }
+        if (apis.isEmpty()) {
+            return "empty apis";
+        }
+
+        String json = JSON.toJSONString(apis,ESBConsts.FASTJSON_SERIALIZER_FEATURES);
         HashMap<String,String> params = new HashMap<>();
         params.put("API_INFO",json);
         addSign(rsaPriKey,params);
