@@ -143,14 +143,18 @@ public final class GWAPIHelper {
 
     // 发布到接口
     private static String deploy(List<ESBAPIInfo> list, String gwHost, int gwPort, String rsaPriKey, Set<String> exclude) throws Exception {
-        List<ESBAPIInfo> apis = new ArrayList<>();
+        List<ESBAPIInfo> apis = null;
         if (exclude != null && exclude.size() > 0) {
+            apis = new ArrayList<>();
             for (ESBAPIInfo info : list) {
                 if (info.api != null && !exclude.contains(info.api.getAPISelector())) {
                     apis.add(info);
                 }
             }
+        } else {
+            apis = list;
         }
+
         if (apis.isEmpty()) {
             return "empty apis";
         }

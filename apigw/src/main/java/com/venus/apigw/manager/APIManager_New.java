@@ -173,7 +173,7 @@ public final class APIManager_New {
         LOCAL_IP = getHttpIP();
         if (LOCAL_IP != null && zkClient != null) {
             LOCAL_PORT = getHttpPort();
-            zkClient.create(GW_NODE_ROOT + "/" + LOCAL_IP + ":" + LOCAL_PORT, false);
+            zkClient.create(GW_NODE_ROOT + "/" + LOCAL_IP + ":" + LOCAL_PORT, true);
         }
     }
 
