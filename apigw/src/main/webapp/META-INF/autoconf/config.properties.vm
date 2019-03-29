@@ -30,12 +30,12 @@ oss.bucket.public=${oss.bucket.public}
 dubbo.application.name=APIGW_2_0
 dubbo.registry.url=${dubbo.registry.url}
 dubbo.reference.version=${dubbo.reference.version}
-dubbo.reference.timeout=3000
+dubbo.reference.timeout=5000
 dubbo.reference.retries=0
 
 # http配置
-http.connect.timeout=3000
-http.read.timeout=3000
+http.connect.timeout=5000
+http.read.timeout=5000
 
 #esb单独配置
 com.venus.esb.observer=com.venus.apigw.manager.ESBBraveObserver

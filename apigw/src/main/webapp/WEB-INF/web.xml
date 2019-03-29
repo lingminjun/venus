@@ -31,4 +31,22 @@
         <url-pattern>/info.api</url-pattern>
     </servlet-mapping>
 
+    <!-- 人机验证(后缀统一采用.api，方便NGINX配置) -->
+    <servlet>
+        <servlet-name>captcha</servlet-name>
+        <servlet-class>com.venus.apigw.servlet.CaptchaServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>captcha</servlet-name>
+        <url-pattern>/captcha/touch.gif</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>checkcaptcha</servlet-name>
+        <servlet-class>com.venus.apigw.servlet.CaptchaCheckServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>checkcaptcha</servlet-name>
+        <url-pattern>/captcha/check.api</url-pattern>
+    </servlet-mapping>
+
 </web-app>

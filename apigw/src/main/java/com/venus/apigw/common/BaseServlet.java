@@ -4,11 +4,8 @@ import com.venus.apigw.config.GWConfig;
 import com.venus.apigw.consts.ConstField;
 import com.venus.apigw.document.entities.CallState;
 import com.venus.apigw.document.entities.Response;
+import com.venus.esb.*;
 import com.venus.esb.lang.*;
-import com.venus.esb.ESBAPIContext;
-import com.venus.esb.ESBAPIJsonSerializer;
-import com.venus.esb.ESBAPISerializer;
-import com.venus.esb.ESBResponse;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.Map.Entry;
@@ -46,9 +44,8 @@ public abstract class BaseServlet extends HttpServlet {
     public static final   String               CONTENT_TYPE_PLAINTEXT   = "text/plain";
 
 
-    public BaseServlet() {
-
-    }
+    //说明下，因为ESB完整性考虑，延后context初始化，但是其他情况，都提前初始化
+    protected boolean notFeedContext = false;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -63,11 +60,101 @@ public abstract class BaseServlet extends HttpServlet {
         processRequest(request, response);
     }
 
-    protected final void setResponseCrossHeader(HttpServletRequest request, HttpServletResponse response) {
+
+    protected final boolean isAddressIP(String host) {
+        if (host == null) {
+            return false;
+        }
+        String[] ss = host.toLowerCase().split("\\.");
+        if (ss.length == 4
+                && ESBT.isDigit(ss[0])
+                && ESBT.isDigit(ss[1])
+                && ESBT.isDigit(ss[2])
+                && ESBT.isDigit(ss[3])) {
+            return true;
+        }
+        return false;
+    }
+
+    // 获取主域名，二级域名，如www.baidu.com，主域名则为 baidu.com
+    protected final String getMainHost(HttpServletRequest request) {
+        // www.baidu.com
+        String host = request.getHeader("Host");
+        if (host != null) {
+            // 转小写
+            host = host.toLowerCase();
+
+            // 截取端口
+            {
+                int idx = host.lastIndexOf(":");
+                if (idx > 0 && idx < host.length()) {
+                    host = host.substring(0,idx);
+                }
+            }
+
+            // 判断是纯ip
+            if (!isAddressIP(host)) {
+                String[] ss = host.split("\\.", Integer.MAX_VALUE);
+                if (ss.length >= 2) {
+                    host = ss[ss.length - 2] + "." + ss[ss.length - 1];
+                }
+            }
+        }
+        return host;
+    }
+
+    // 获取Origin主域名，二级域名，如www.baidu.com，主域名则为 baidu.com
+    protected final String getMainOrigin(HttpServletRequest request) {
+        // https://www.baidu.com
         String origin = request.getHeader("Origin");
+        String host = null;
+        if (origin != null) {
+            // 转小写
+            origin = origin.toLowerCase();
+
+            // 截取头
+            {
+                int idx = origin.indexOf("//");
+                if (idx > 0 && idx + 2 < origin.length()) {
+                    origin = origin.substring(idx + 2);
+                }
+            }
+            // 截取端口
+            {
+                int idx = origin.lastIndexOf(":");
+                if (idx > 0 && idx < origin.length()) {
+                    origin = origin.substring(0,idx);
+                }
+            }
+
+            // 判断是纯ip
+            if (!isAddressIP(origin)) {
+                String[] ss = origin.split("\\.", Integer.MAX_VALUE);
+                if (ss.length >= 2) {
+                    host = ss[ss.length - 2] + "." + ss[ss.length - 1];
+                } else {
+                    host = origin;
+                }
+            } else {
+                host = origin;
+            }
+
+        }
+        return host;
+    }
+
+    protected final void setResponseCrossHeader(HttpServletRequest request, HttpServletResponse response) {
+        String origin = getMainOrigin(request);
+        String host = getMainHost(request);
+        //默认支持三级域名跨域 如www.baidu.com，则支持.baidu.com方式
+        if (origin != null && origin.equals(host)) {
+            response.setHeader(HEADER_ORGIN, request.getHeader("Origin"));//
+            response.addHeader(HEADER_METHOD, HEADER_METHOD_VALUE);
+            response.setHeader(HEADER_CREDENTIALS, HEADER_CREDENTIALS_VALUE);
+        }
         // 安全性控制 （防止免登进入其他网站域名，拥有用户权限）
-        if (origin != null && GWConfig.getInstance().getOriginWhiteList().containsKey(origin)) {
-            response.setHeader(HEADER_ORGIN, origin);
+        else if (origin != null && GWConfig.getInstance().getOriginWhiteList().containsKey(origin)) {
+            response.setHeader(HEADER_ORGIN, request.getHeader("Origin"));//
             response.addHeader(HEADER_METHOD, HEADER_METHOD_VALUE);
             response.setHeader(HEADER_CREDENTIALS, HEADER_CREDENTIALS_VALUE);
         }
@@ -224,7 +311,7 @@ public abstract class BaseServlet extends HttpServlet {
     /**
      * 执行web请求
      */
-    private final void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    private final void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
         ESBAPIContext.remove();// 防止取脏数据
         ESBAPIContext context = ESBAPIContext.context();//走新的流程
         try {
@@ -237,7 +324,14 @@ public abstract class BaseServlet extends HttpServlet {
             //取所有参数
             Map<String,String> params = parseRequestParams(request);
             Map<String,String> header = parseRequestHeaders(request);
-            Map<String,ESBCookie> cookie = parseRequestCookies(request);
+            Map<String,ESBCookie> cookies = parseRequestCookies(request);
+
+            //将数据填充到context中
+            if (!notFeedContext) {
+                ESBAPIContext.fill(context, params, header, cookies, null);
+                //自动注入did
+                context.autoInjectDeviceToken();
+            }
 
             //埋点需要，记录请求URL
             context.putTempExt("the_request_url", getRequestUrl(request));
@@ -251,10 +345,22 @@ public abstract class BaseServlet extends HttpServlet {
             //设置响应头
             setResponseContentType(request, response, context);
 
-            List<ESBResponse> result = dispatchedCall(params,header,cookie,readPostBody(request));//
-//                    ESB.bus().call(params,header,cookie,readPostBody(request));
+            //执行调用
+            processCall(context,request,response,params,header,cookies);
+        } catch (Throwable e) {
+            logger.error("请求异常",e);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "GW Bad Request");
+        }
+    }
 
-            //设置cookie
+    // 参数都处理好了
+    protected void processCall(ESBAPIContext context, HttpServletRequest request, HttpServletResponse response, Map<String,String> params, Map<String,String> header, Map<String,ESBCookie> cookies) throws IOException {
+        try {
+
+            // 转发调用
+            List<ESBResponse> result = dispatchedCall(params, header, cookies, readPostBody(request));//
+
+            // 返回前，设置cookie (必须在 getOutputStream 前设置)
             ESBCookieExts setc = context.cookies;
             if (setc != null && setc.size() > 0) {
                 setResponseCookies(setc.map(),response);
@@ -266,6 +372,12 @@ public abstract class BaseServlet extends HttpServlet {
         } catch (ESBException e) {
             // 访问被拒绝(如签名验证失败)
             try {
+                // 服务一次，若设置cookie，同样修改
+                ESBCookieExts setc = context.cookies;
+                if (setc != null && setc.size() > 0) {
+                    setResponseCookies(setc.map(),response);
+                }
+
                 out(context, e, null, response);
             } catch (ESBException e1) {
                 logger.error("写请求异常",e1);
@@ -335,7 +447,11 @@ public abstract class BaseServlet extends HttpServlet {
                 ESBCookie ck = new ESBCookie();
                 ck.domain = c.getDomain();
                 ck.name = c.getName();
-                ck.value = c.getValue();
+                try {
+                    ck.value = URLDecoder.decode(c.getValue(), ESBConsts.UTF8_STR);
+                } catch (UnsupportedEncodingException e) {
+                    ck.value = c.getValue();
+                }
                 ck.path = c.getPath();
                 ck.maxAge = c.getMaxAge();
                 ck.secure = c.getSecure();
@@ -393,18 +509,26 @@ public abstract class BaseServlet extends HttpServlet {
             return;
         }
         for (Entry<String,ESBCookie> entry : cookies.entrySet()) {
-            ESBCookie c = entry.getValue();
-            try {
-                Cookie cookie = new Cookie(c.name, (c.value == null || c.value.length() == 0)? "" : URLEncoder.encode(c.value, ESBConsts.UTF8_STR));
-                cookie.setMaxAge(c.maxAge);
-                cookie.setHttpOnly(c.httpOnly);
-                cookie.setSecure(c.secure);
-                cookie.setPath((c.path == null || c.path.length() == 0)? "/" : c.path);
-                //tomcat8遇到问题 在tomcat_home/conf/context.xml添加配置：
-                // <CookieProcessor className="org.apache.tomcat.util.http.LegacyCookieProcessor" />
-                cookie.setDomain((c.domain == null || c.domain.length() == 0)? "" : c.domain);
-                response.addCookie(cookie);
-            } catch (Throwable e) {e.printStackTrace();}
+            setResponseCookie(entry.getValue(),response);
         }
+    }
+
+    /**
+     * 请求cookie获取
+     */
+    protected final void setResponseCookie(ESBCookie c, HttpServletResponse response) {
+        try {
+            Cookie cookie = new Cookie(c.name, (c.value == null || c.value.length() == 0)? "" : URLEncoder.encode(c.value, ESBConsts.UTF8_STR));
+            cookie.setMaxAge(c.maxAge);
+            cookie.setHttpOnly(c.httpOnly);
+            cookie.setSecure(c.secure);
+            if (!ESBT.isEmpty(c.path)) {
+                cookie.setPath(c.path);
+            }
+            //tomcat8遇到问题 在tomcat_home/conf/context.xml添加配置：
+            // <CookieProcessor className="org.apache.tomcat.util.http.LegacyCookieProcessor" />
+            cookie.setDomain((c.domain == null || c.domain.length() == 0)? "" : c.domain);
+            response.addCookie(cookie);
+        } catch (Throwable e) {e.printStackTrace();}
     }
 }

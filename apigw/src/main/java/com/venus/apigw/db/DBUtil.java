@@ -35,7 +35,7 @@ public final class DBUtil {
     private static final String API_DB_TABLE = "apigw_api";
     private static final String API_HISTORY_DB_TABLE = "apigw_api_history";
     private static final String[] API_KEYS = new String[]{"domain","module","method","json","detail","owner","security","status","created","modified","md5","upstamp","thestamp","rollback"};
-    private static final String[] API_HISTORY_KEYS = new String[]{"upstamp","domain","module","method","json","detail","owner","security","status","created","modified","md5","thestamp","rollback"};
+    private static final String[] API_HISTORY_KEYS = new String[]{"upstamp","domain","module","method","json","detail","owner","security","status","created","modified","md5","prestamp","thestamp","rollback"};
 
     private DB db;
     private String database = "apigw";
@@ -129,7 +129,7 @@ public final class DBUtil {
             pojo.upstamp = timestamp; //设置统一的timestamp
             pojo.thestamp = thestamp;
             pojo.rollback = 0;
-            pojo.prestamp = old != null ? old.prestamp : 0; //记录前一个更新位置
+            pojo.prestamp = old != null ? old.upstamp : 0; //记录前一个更新位置
 
             sels.add(api.api.getAPISelector());
             pojos.add(pojo);
@@ -418,7 +418,7 @@ public final class DBUtil {
     private static List<APIPojo> getBeRollback(DB db, String domain, String module, String method, Long timestamp) {
         return db.query(API_HISTORY_DB_TABLE,
                 "`domain` = ? and `module` = ? and `method` = ? and `upstamp` > ? and `rollback` = 0 ",
-                new Object[]{timestamp,domain,module,method},
+                new Object[]{domain,module,method,timestamp},
                 APIPojo.class);
     }
 

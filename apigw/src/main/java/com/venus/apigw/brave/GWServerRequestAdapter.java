@@ -111,6 +111,10 @@ public class GWServerRequestAdapter implements ServerRequestAdapter {
             annotations.add(KeyValueAnnotation.create(ESBSTDKeys.UA_KEY, context.ua));
         }
 
+        if (context.guid != null && context.guid.length() > 0) {
+            annotations.add(KeyValueAnnotation.create(ESBSTDKeys.GUID_KEY, context.guid));
+        }
+
         if (context.referer != null && context.referer.length() > 0) {
             annotations.add(KeyValueAnnotation.create(ESBSTDKeys.REFERER_KEY, context.referer));
         }

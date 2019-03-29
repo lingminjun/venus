@@ -94,7 +94,7 @@ public class InfoServlet extends BaseServlet {
                 out = resp.getOutputStream();
             }
             out.write(t.getMessage().getBytes());
-            t.printStackTrace(resp.getWriter());
+            t.printStackTrace();
         }
     }
 

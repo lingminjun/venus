@@ -24,6 +24,10 @@ public class DispatchServlet extends BaseServlet {
         super();
     }
 
+    // 初始化特殊参数
+    {
+        this.notFeedContext = true;
+    }
 
     @Override
     protected List<ESBResponse> dispatchedCall(Map<String,String> params, Map<String,String> header, Map<String,ESBCookie> cookies, String body) throws ESBException {
