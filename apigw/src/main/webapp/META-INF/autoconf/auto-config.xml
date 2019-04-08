@@ -2,6 +2,8 @@
 
 <config description="venus.apigw.config">
     <group name="logger">
+        <property name="com.venus.apigw.log.sync.db" description="logger同步到db" required="true"/>
+        <property name="com.venus.apigw.log.sync.kafka" description="logger同步到kafka" required="true"/>
         <property name="com.venus.apigw.log.home" description="日志地址" required="true"/>
     </group>
     <group name="dubbo">
@@ -30,6 +32,12 @@
         <property name="com.venus.gw.datasource.username" description="用户名" required="true"/>
         <property name="com.venus.gw.datasource.password" description="密码" required="true"/>
         <property name="com.venus.gw.datasource.driverClassName" description="驱动" required="true"/>
+    </group>
+    <group name="bi">
+        <property name="com.venus.bi.datasource.url" description="数据库链接地址" required="true"/>
+        <property name="com.venus.bi.datasource.username" description="用户名" required="true"/>
+        <property name="com.venus.bi.datasource.password" description="密码" required="true"/>
+        <property name="com.venus.bi.datasource.driverClassName" description="驱动" required="true"/>
     </group>
     <group name="oss">
         <property name="oss.bucket.user.private" description="用户相关oss bucket" required="true"/>

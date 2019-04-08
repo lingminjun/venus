@@ -54,6 +54,14 @@ public class GWConfig {
         this.setDatasourcePassword(prop.getProperty("com.venus.gw.datasource.password"));
         this.setDatasourceDriverClass(prop.getProperty("com.venus.gw.datasource.driverClassName"));
 
+        this.setLogSyncDB(ESBT.bool(prop.getProperty("com.venus.apigw.log.sync.db")));
+        this.setLogSyncKafka(ESBT.bool(prop.getProperty("com.venus.apigw.log.sync.kafka")));
+
+        this.setBidatasourceUrl(prop.getProperty("com.venus.bi.datasource.url"));
+        this.setBidatasourceUsername(prop.getProperty("com.venus.bi.datasource.username"));
+        this.setBidatasourcePassword(prop.getProperty("com.venus.bi.datasource.password"));
+        this.setBidatasourceDriverClass(prop.getProperty("com.venus.bi.datasource.driverClassName"));
+
         if (input != null) {
             try {
                 input.close();
@@ -291,11 +299,65 @@ public class GWConfig {
     }
 
 
+    private boolean logSyncDB;
+    private boolean logSyncKafka;
+
+    // 数据库配置
+    private String bidatasourceUrl;
+    private String bidatasourceUsername;
+    private String bidatasourcePassword;
+    private String bidatasourceDriverClass;
+
+    public boolean isLogSyncDB() {
+        return logSyncDB;
+    }
+
+    public void setLogSyncDB(boolean logSyncDB) {
+        this.logSyncDB = logSyncDB;
+    }
+
+    public boolean isLogSyncKafka() {
+        return logSyncKafka;
+    }
+
+    public void setLogSyncKafka(boolean logSyncKafka) {
+        this.logSyncKafka = logSyncKafka;
+    }
+
+    public String getBidatasourceUrl() {
+        return bidatasourceUrl;
+    }
+
+    public void setBidatasourceUrl(String bidatasourceUrl) {
+        this.bidatasourceUrl = bidatasourceUrl;
+    }
+
+    public String getBidatasourceUsername() {
+        return bidatasourceUsername;
+    }
+
+    public void setBidatasourceUsername(String bidatasourceUsername) {
+        this.bidatasourceUsername = bidatasourceUsername;
+    }
+
+    public String getBidatasourcePassword() {
+        return bidatasourcePassword;
+    }
+
+    public void setBidatasourcePassword(String bidatasourcePassword) {
+        this.bidatasourcePassword = bidatasourcePassword;
+    }
+
+    public String getBidatasourceDriverClass() {
+        return bidatasourceDriverClass;
+    }
+
+    public void setBidatasourceDriverClass(String bidatasourceDriverClass) {
+        this.bidatasourceDriverClass = bidatasourceDriverClass;
+    }
 
 
-
-
-    //=================================注意分割线=================================
+//=================================注意分割线=================================
     // 建议放入动态配置
     /** 开启ip风控 */
     private boolean                 riskOpen = true;

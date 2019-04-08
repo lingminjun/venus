@@ -1,5 +1,6 @@
 package com.venus.apigw.manager;
 
+import com.venus.apigw.bi.ESBBILogger;
 import com.venus.esb.*;
 import com.venus.esb.lang.ESBCookie;
 import com.venus.esb.lang.ESBException;
@@ -19,7 +20,7 @@ import java.util.Map;
  * Date: 2018-09-21
  * Time: 下午9:22
  */
-public class ESBLogger implements ESB.APILogger {
+public class ESBLogger extends ESBBILogger {
     private static Logger accessFileLogger  = LoggerFactory.getLogger("net.pocrd.api.access");
     private static Logger requestFileLogger = LoggerFactory.getLogger("net.pocrd.api.request");
     public static final  String       ACCESS_SPLITTER   = new String(new char[] { ' ', 1 });
@@ -59,6 +60,7 @@ public class ESBLogger implements ESB.APILogger {
 
     @Override
     public void access(ESB esb, ESBAPIInfo info, ESBAPIContext context, Map<String, String> params, Map<String, String> header, Map<String, ESBCookie> cookies, ESBInvocation invocation, Object result, ESBException e) {
+        super.access(esb,info,context,params,header,cookies,invocation,result,e);
         long now = System.currentTimeMillis();
         long cost = now - context.at;
         accessFileLogger.info(info.api.getAPISelector()
