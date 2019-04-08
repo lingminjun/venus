@@ -101,7 +101,7 @@ public class ESBBILogger implements ESB.APILogger {
         pojo.tid = context.tid;
 
         // 为了更少的数据存储，将referer整理，也是方便后面搜索
-        if (ESBT.isEmpty(context.referer)) {
+        if (!ESBT.isEmpty(context.referer)) {
             pojo.ref = URLs.tidyURI(context.referer, "https", null);
             // 尽量统一到一起
             pojo.md5 = pojo.ref == null ? null : MD5.md5(pojo.ref);
