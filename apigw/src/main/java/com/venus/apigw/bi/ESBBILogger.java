@@ -29,7 +29,7 @@ public class ESBBILogger implements ESB.APILogger {
     private static final String VID_KEY = "_v";
 
 //    private static final String[] PV_KEYS = new String[]{"htm","app","did","md5","tml","ref","uid","acct"};
-    private static final String[] METHOD_KEYS = new String[]{"aid","app","did","tid","cip","mthd","uid","acct","cvc","cvn","cost","scs","at","tml","md5","ref","qry","vid","src","spm"};
+    private static final String[] METHOD_KEYS = new String[]{"aid","app","did","tid","cip","mthd","uid","acct","cvc","cvn","cost","scs","at","htm","tml","md5","ref","qry","vid","src","spm"};
 
     // 三天
     private static final long THREE_DAYS = 3 * 24 * 3600 * 1000;
@@ -128,7 +128,7 @@ public class ESBBILogger implements ESB.APILogger {
         pojo.scs = e == null ? 1 : 0;
 
         pojo.at = context.at;
-//        pojo.htm = ((long)(context.at / 3600000)) * 3600000 ;
+        pojo.htm = ((long)(context.at / 3600000)) * 3600000 ;
 
         return pojo;
     }
