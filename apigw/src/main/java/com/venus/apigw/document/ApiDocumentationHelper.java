@@ -115,7 +115,7 @@ public class ApiDocumentationHelper {
 //        parseStruct(groupName,struct,structs,list,new HashSet<>());
 //    }
 
-    public static void parseStruct(String groupName, ESBAPIStruct struct, Map<String,ESBAPIStruct> structs, List<TypeStruct> list, Set<String> sets) {
+    public static void parseStruct(String groupName, ESBAPIStruct struct, Map<String,ESBAPIStruct> maps, List<TypeStruct> list, Set<String> sets) {
         if (struct == null) {
             return;
         }
@@ -151,7 +151,7 @@ public class ApiDocumentationHelper {
         // param为符合类型时
         for (ESBAPIParam param : struct.fields) { //属性列表
             String coreType = ESBT.convertCoreType(param.type);
-            parseStruct(groupName,structs.get(coreType),structs,list,sets);
+            parseStruct(groupName,maps.get(coreType),maps,list,sets);
         }
     }
 
@@ -219,33 +219,39 @@ public class ApiDocumentationHelper {
     }
 
     private List<TypeStruct> getCommonRespTypeStruct() {
-        Map<String,ESBAPIStruct> strust = new HashMap<>();
+        Set<String> setss = new HashSet<>();
 
-        ESBAPIHelper.parseObjectType(Response.class, strust);
-        ESBAPIHelper.parseObjectType(ESBBoolean.class,strust);
-        ESBAPIHelper.parseObjectType(ESBBooleanArray.class,strust);
-        ESBAPIHelper.parseObjectType(ESBDouble.class,strust);
-        ESBAPIHelper.parseObjectType(ESBDoubleArray.class,strust);
-        ESBAPIHelper.parseObjectType(ESBFloat.class,strust);
-        ESBAPIHelper.parseObjectType(ESBFloatArray.class,strust);
-        ESBAPIHelper.parseObjectType(ESBLong.class,strust);
-        ESBAPIHelper.parseObjectType(ESBLongArray.class,strust);
-        ESBAPIHelper.parseObjectType(ESBNumber.class,strust);
-        ESBAPIHelper.parseObjectType(ESBNumberArray.class,strust);
-        ESBAPIHelper.parseObjectType(ESBString.class,strust);
-        ESBAPIHelper.parseObjectType(ESBStringArray.class,strust);
-        ESBAPIHelper.parseObjectType(ESBRawString.class,strust);
+        ESBAPIHelper.parseObjectType(Response.class, setss);
+        ESBAPIHelper.parseObjectType(ESBBoolean.class,setss);
+        ESBAPIHelper.parseObjectType(ESBBooleanArray.class,setss);
+        ESBAPIHelper.parseObjectType(ESBDouble.class,setss);
+        ESBAPIHelper.parseObjectType(ESBDoubleArray.class,setss);
+        ESBAPIHelper.parseObjectType(ESBFloat.class,setss);
+        ESBAPIHelper.parseObjectType(ESBFloatArray.class,setss);
+        ESBAPIHelper.parseObjectType(ESBLong.class,setss);
+        ESBAPIHelper.parseObjectType(ESBLongArray.class,setss);
+        ESBAPIHelper.parseObjectType(ESBNumber.class,setss);
+        ESBAPIHelper.parseObjectType(ESBNumberArray.class,setss);
+        ESBAPIHelper.parseObjectType(ESBString.class,setss);
+        ESBAPIHelper.parseObjectType(ESBStringArray.class,setss);
+        ESBAPIHelper.parseObjectType(ESBRawString.class,setss);
 
-        ESBAPIHelper.parseObjectType(ESBContext.class,strust);
-        ESBAPIHelper.parseObjectType(ESBDeviceToken.class,strust);
-        ESBAPIHelper.parseObjectType(ESBToken.class,strust);
-        ESBAPIHelper.parseObjectType(ESBSSOToken.class,strust);
+        ESBAPIHelper.parseObjectType(ESBContext.class,setss);
+        ESBAPIHelper.parseObjectType(ESBDeviceToken.class,setss);
+        ESBAPIHelper.parseObjectType(ESBToken.class,setss);
+        ESBAPIHelper.parseObjectType(ESBSSOToken.class,setss);
 
 
         List<TypeStruct> list = new ArrayList<>();
+        List<ESBAPIStruct> strusts = ESBAPIHelper.getStructs(setss);
+        HashMap<String,ESBAPIStruct> maps = new HashMap<>();
+        for (ESBAPIStruct struct : strusts) {
+            maps.put(struct.type,struct);
+        }
+
         HashSet<String> sets = new HashSet<>();
-        for (ESBAPIStruct struct : strust.values()) {
-            parseStruct("ESB", struct, strust, list, sets);
+        for (ESBAPIStruct struct : strusts) {
+            parseStruct("ESB", struct, maps, list, sets);
         }
         return list;
     }
