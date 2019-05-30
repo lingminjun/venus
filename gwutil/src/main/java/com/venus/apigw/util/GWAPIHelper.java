@@ -46,7 +46,7 @@ public final class GWAPIHelper {
         Set<Class<?>> set = PackageUtil.getClasses(packageName,loader);
         List<ESBAPIInfo> list = loadAll(set,excludeClasses);
         if (list.size() > 0) {
-            return deploy(list,gwHost,gwPort,rsaPriKey,excludeMethods);
+            return deploy(list,gwHost,gwPort,rsaPriKey,excludeMethods,null);
         }
         return null;
     }
@@ -62,7 +62,7 @@ public final class GWAPIHelper {
         Set<Class<?>> set = PackageUtil.getClasses(packageName);
         List<ESBAPIInfo> list = loadAll(set,excludeClasses);
         if (list.size() > 0) {
-            return deploy(list,gwHost,gwPort,rsaPriKey,excludeMethods);
+            return deploy(list,gwHost,gwPort,rsaPriKey,excludeMethods,null);
         }
         return null;
     }
@@ -71,10 +71,21 @@ public final class GWAPIHelper {
     public static String deployService(Class<?> serviceClass, String gwHost, int gwPort, String rsaPriKey) throws Exception {
         return deployService(serviceClass,gwHost,gwPort,rsaPriKey,null);
     }
+
+    //发布整个service除了部分
     public static String deployService(Class<?> serviceClass, String gwHost, int gwPort, String rsaPriKey, Set<String> exclude) throws Exception {
         List<ESBAPIInfo> list = ESBAPIHelper.generate(serviceClass,null,true);
         if (list.size() > 0) {
-            return deploy(list,gwHost,gwPort,rsaPriKey,exclude);
+            return deploy(list,gwHost,gwPort,rsaPriKey,exclude,null);
+        }
+        return null;
+    }
+
+    //仅仅发布指定的接口
+    public static String deployServiceSpecial(Class<?> serviceClass, String gwHost, int gwPort, String rsaPriKey, Set<String> special) throws Exception {
+        List<ESBAPIInfo> list = ESBAPIHelper.generate(serviceClass,null,true);
+        if (list.size() > 0) {
+            return deploy(list,gwHost,gwPort,rsaPriKey,null,special);
         }
         return null;
     }
@@ -142,17 +153,17 @@ public final class GWAPIHelper {
 
 
     // 发布到接口
-    private static String deploy(List<ESBAPIInfo> list, String gwHost, int gwPort, String rsaPriKey, Set<String> exclude) throws Exception {
-        List<ESBAPIInfo> apis = null;
-        if (exclude != null && exclude.size() > 0) {
-            apis = new ArrayList<>();
-            for (ESBAPIInfo info : list) {
-                if (info.api != null && !exclude.contains(info.api.getAPISelector())) {
+    private static String deploy(List<ESBAPIInfo> list, String gwHost, int gwPort, String rsaPriKey, Set<String> exclude, Set<String> limit) throws Exception {
+        List<ESBAPIInfo> apis = new ArrayList<>();
+        for (ESBAPIInfo info : list) {
+            if (info.api != null) {
+                String api = info.api.getAPISelector();
+                if ((exclude == null || exclude.isEmpty() || !exclude.contains(api)) // 排除在外的
+                        && (limit == null || limit.isEmpty() || limit.contains(api))) // 包含在内的
+                {
                     apis.add(info);
                 }
             }
-        } else {
-            apis = list;
         }
 
         if (apis.isEmpty()) {
