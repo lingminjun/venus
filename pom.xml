@@ -34,7 +34,7 @@
         <logback.version>1.2.3</logback.version>
         <commons.logging>1.1.1</commons.logging>
 
-        <fastjson.version>1.2.57</fastjson.version>
+        <fastjson.version>1.2.83</fastjson.version>
         <!-- 升级fastjson 安全漏洞 -->
 
         <tomcat.jdbc.version>7.0.50</tomcat.jdbc.version>
