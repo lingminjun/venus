@@ -27,7 +27,7 @@
         <!-- 注意dubbo若要支持tomcat 8.5.31以上版本，必须升级到2.6.3 -->
         <!-- 注意dubbo若要支持tomcat 7及以下版本，必须停留在2.6.2-->
         <dubbo.version>2.6.2</dubbo.version>
-        <tomcat.version>7.0.50</tomcat.version>
+        <tomcat.version>7.0.81</tomcat.version>
 
         <!-- logback相关配置 -->
         <slf4j.version>1.7.22</slf4j.version>
